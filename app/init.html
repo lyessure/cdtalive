@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CDT Alive · 初始化配置</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-gradient: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
+  --ink: #f8fafc;
+  --muted: #94a3b8;
+  --line: rgba(255, 255, 255, 0.08);
+  --surface: rgba(15, 23, 42, 0.65);
+  --blue: #38bdf8;
+  --blue-hover: #0ea5e9;
+  --blue-glow: rgba(56, 189, 248, 0.2);
+  --green: #10b981;
+  --red: #f43f5e;
+  --border-radius: 16px;
+  --shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg-gradient);
+  color: var(--ink);
+  font: 13px/1.4 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.page-wrapper {
+  position: relative;
+  width: 100%;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow: hidden;
+}
+.glow-blob {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: 0;
+  opacity: 0.08;
+  pointer-events: none;
+}
+.blob-1 {
+  background: #0ea5e9;
+  top: -100px;
+  left: -100px;
+  animation: float 12s ease-in-out infinite alternate;
+}
+.blob-2 {
+  background: #6366f1;
+  bottom: -100px;
+  right: -100px;
+  animation: float 15s ease-in-out infinite alternate-reverse;
+}
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, 30px) scale(1.1); }
+}
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--line);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 20px 24px;
+  z-index: 1;
+  position: relative;
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.logo {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+}
+.brand-text h1 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #ffffff 40%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.brand-text p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 1px 0 0;
+}
+
+h2.section-title {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--blue);
+  margin: 16px 0 10px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+}
+
+.form-group {
+  margin-bottom: 10px;
+}
+.form-group.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .form-group.row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+.label-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+input {
+  width: 100%;
+  height: 34px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
+  color: var(--ink);
+  font: 12px 'Inter', sans-serif;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+input[type="password"] {
+  padding-right: 34px;
+}
+input.monospace {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-glow);
+  background: rgba(15, 23, 42, 0.7);
+}
+.toggle-pwd {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  box-shadow: none;
+}
+.toggle-pwd:hover {
+  color: var(--ink);
+  transform: none;
+  background: none;
+}
+.toggle-pwd svg {
+  width: 14px;
+  height: 14px;
+}
+
+.submit-btn {
+  width: 100%;
+  height: 36px;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.submit-btn:hover {
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.3);
+  transform: translateY(-1px);
+}
+.submit-btn:active {
+  transform: translateY(0);
+}
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: none;
+}
+.submit-btn.loading .spinner {
+  display: block;
+}
+.submit-btn.loading span {
+  display: none;
+}
+
+.message-box {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.5;
+  display: none;
+  animation: slideDown 0.3s ease;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.message-box.error {
+  display: block;
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  color: #fda4af;
+}
+.message-box.success {
+  display: block;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #a7f3d0;
+}
+
+.success-animation {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px 0;
+  animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes scaleIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.checkmark-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.1);
+  border: 2px solid var(--green);
+  display: grid;
+  place-items: center;
+  color: var(--green);
+  margin-bottom: 12px;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+.checkmark-circle svg {
+  width: 24px;
+  height: 24px;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.5s cubic-bezier(0.65, 0, 0.45, 1) 0.2s forwards;
+}
+@keyframes stroke {
+  to { stroke-dashoffset: 0; }
+}
+.success-animation h3 {
+  font-size: 16px;
+  margin: 0 0 4px;
+  font-weight: 800;
+}
+.success-animation p {
+  color: var(--muted);
+  margin: 0;
+}
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+  <div class="glow-blob blob-1"></div>
+  <div class="glow-blob blob-2"></div>
+
+  <div class="container" id="initCard">
+    <div class="brand">
+      <div class="logo">C</div>
+      <div class="brand-text">
+        <h1>CDT Alive</h1>
+        <p>初始化系统配置</p>
+      </div>
+    </div>
+
+    <form id="initForm" onsubmit="submitConfig(event)">
+      <h2 class="section-title">阿里云凭证 (API Credentials)</h2>
+      
+      <div class="form-group row">
+        <div>
+          <div class="label-container">
+            <label for="accessKeyId">Access Key ID</label>
+          </div>
+          <input type="text" id="accessKeyId" class="monospace" required placeholder="LTAIxxxxxxxxxxxx">
+        </div>
+        <div>
+          <div class="label-container">
+            <label for="accessKeySecret">Access Key Secret</label>
+          </div>
+          <div class="input-wrapper">
+            <input type="password" id="accessKeySecret" class="monospace" required placeholder="xxxxxxxxxxxxxxxxxxxxxx">
+            <button type="button" class="toggle-pwd" onclick="togglePasswordVisibility('accessKeySecret')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="eyeIcon">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="label-container">
+          <label for="ecsInstanceId">ECS 实例 ID</label>
+        </div>
+        <input type="text" id="ecsInstanceId" class="monospace" required placeholder="i-xxxxxxxxxxxxxxxxx">
+      </div>
+
+      <h2 class="section-title">运行策略 (Execution Policies)</h2>
+
+      <div class="form-group row">
+        <div>
+          <div class="label-container">
+            <label for="regionId">地域 Region ID</label>
+          </div>
+          <input type="text" id="regionId" class="monospace" required value="cn-hongkong">
+        </div>
+        <div>
+          <div class="label-container">
+            <label for="runInterval">检查间隔 (秒)</label>
+          </div>
+          <input type="number" id="runInterval" required min="60" value="300">
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <div>
+          <div class="label-container">
+            <label for="trafficThreshold">CDT 流量阈值 (GB)</label>
+          </div>
+          <input type="number" id="trafficThreshold" required step="0.1" value="190.0">
+        </div>
+        <div>
+          <div class="label-container">
+            <label for="balanceThreshold">余额阈值 (CNY)</label>
+          </div>
+          <input type="number" id="balanceThreshold" required step="0.1" value="1.0">
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">
+        <span>保存配置并启动</span>
+        <div class="spinner"></div>
+      </button>
+    </form>
+
+    <div class="message-box" id="messageBox"></div>
+  </div>
+
+  <div class="container" id="successCard" style="display:none;">
+    <div class="success-animation" style="display:flex;">
+      <div class="checkmark-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h3>配置初始化成功</h3>
+      <p id="successMessage">系统将在 2 秒后自动跳转至控制台...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePasswordVisibility(id) {
+  const input = document.getElementById(id);
+  const icon = document.getElementById('eyeIcon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+  } else {
+    input.type = 'password';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+  }
+}
+
+async function submitConfig(event) {
+  event.preventDefault();
+  
+  const btn = document.getElementById('submitBtn');
+  const msgBox = document.getElementById('messageBox');
+  
+  const rawId = document.getElementById('accessKeyId').value.trim();
+  const rawSecret = document.getElementById('accessKeySecret').value.trim();
+  const rawEcs = document.getElementById('ecsInstanceId').value.trim();
+  const rawRegion = document.getElementById('regionId').value.trim();
+  const rawInterval = document.getElementById('runInterval').value.trim();
+  const rawTraffic = document.getElementById('trafficThreshold').value.trim();
+  const rawBalance = document.getElementById('balanceThreshold').value.trim();
+
+  msgBox.className = 'message-box';
+  msgBox.style.display = 'none';
+
+  if (!rawId || !rawSecret || !rawEcs || !rawRegion || !rawInterval || !rawTraffic || !rawBalance) {
+    msgBox.textContent = '所有参数均为必填项，请填写完整后再提交。';
+    msgBox.className = 'message-box error';
+    return;
+  }
+
+  const intervalVal = parseInt(rawInterval, 10);
+  if (isNaN(intervalVal) || intervalVal < 60) {
+    msgBox.textContent = '检查间隔必须是不小于 60 秒的整数。';
+    msgBox.className = 'message-box error';
+    return;
+  }
+
+  const trafficVal = parseFloat(rawTraffic);
+  if (isNaN(trafficVal) || trafficVal < 0) {
+    msgBox.textContent = '流量阈值必须是合法的数字。';
+    msgBox.className = 'message-box error';
+    return;
+  }
+
+  const balanceVal = parseFloat(rawBalance);
+  if (isNaN(balanceVal) || balanceVal < 0) {
+    msgBox.textContent = '余额阈值必须是合法的数字。';
+    msgBox.className = 'message-box error';
+    return;
+  }
+
+  const payload = {
+    access_key_id: rawId,
+    access_key_secret: rawSecret,
+    ecs_instance_id: rawEcs,
+    region_id: rawRegion,
+    run_interval_seconds: intervalVal,
+    traffic_threshold_gb: trafficVal,
+    balance_threshold_cny: balanceVal,
+    daily_stop_windows: []
+  };
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/init', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || '初始化保存失败');
+    }
+    
+    document.getElementById('initCard').style.display = 'none';
+    document.getElementById('successCard').style.display = 'block';
+    
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+
+  } catch (err) {
+    msgBox.textContent = err.message;
+    msgBox.className = 'message-box error';
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

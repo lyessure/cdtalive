@@ -1,0 +1,15 @@
+services:
+  cdtalive:
+    build: .
+    container_name: cdtalive
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      CDT_CONFIG_FILE: /data/cdtalive.yaml
+      CDT_DATA_DIR: /data
+    ports:
+      - "127.0.0.1:${CDT_WEB_PORT:-5201}:8080"
+    volumes:
+      - ./data:/data

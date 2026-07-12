@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CDT Alive · 控制台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: rgba(15, 23, 42, 0.08);
+  --surface: #ffffff;
+  --surface-hover: #fafafa;
+  --blue: #0284c7;
+  --blue-soft: rgba(2, 132, 199, 0.08);
+  --blue-glow: rgba(2, 132, 199, 0.12);
+  --green: #10b981;
+  --green-soft: rgba(16, 185, 129, 0.08);
+  --green-glow: rgba(16, 185, 129, 0.12);
+  --amber: #f59e0b;
+  --amber-soft: rgba(245, 158, 11, 0.08);
+  --amber-glow: rgba(245, 158, 11, 0.12);
+  --red: #ef4444;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  --border-radius: 16px;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--bg-gradient);
+  color: var(--ink);
+  font: 14px/1.5 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  border: 1px solid #f1f5f9;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.shell {
+  width: 100%;
+  max-width: 1060px;
+  margin: auto;
+  padding: 20px 16px;
+}
+.header {
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: white;
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2);
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: .15em;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+h1 {
+  font-size: 22px;
+  line-height: 1.1;
+  margin: 2px 0 0;
+  letter-spacing: -.03em;
+  font-weight: 800;
+  color: var(--ink);
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.updated {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 6px 14px;
+  box-shadow: var(--shadow);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.updated:hover {
+  border-color: rgba(2, 132, 199, 0.3);
+  color: var(--ink);
+}
+.updated-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--blue);
+  flex-shrink: 0;
+  transform-origin: center;
+}
+.updated-icon.syncing {
+  animation: spin 1.2s linear infinite;
+  color: var(--green);
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+button {
+  height: 38px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 16px;
+  font: 600 13px 'Inter', sans-serif;
+  cursor: pointer;
+  background: #ffffff;
+  color: #475569;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+button:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+  transform: translateY(-1px);
+}
+button:active {
+  transform: translateY(0);
+}
+.primary {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: var(--ink);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.primary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: var(--ink);
+}
+.primary:disabled {
+  opacity: .5;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
+}
+.status {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--line);
+  border-radius: var(--border-radius);
+  background: var(--surface);
+  padding: 0 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.status-left {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.15);
+  position: relative;
+  transition: all 0.3s;
+}
+.dot.warn {
+  background: var(--amber);
+  box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.15);
+}
+.dot.danger {
+  background: var(--red);
+  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.15);
+}
+.status-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.status-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.badge {
+  padding: 6px 12px;
+  background: rgba(2, 132, 199, 0.08);
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid rgba(2, 132, 199, 0.18);
+  letter-spacing: 0.02em;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.card, .panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.card {
+  height: 132px;
+  padding: 16px;
+}
+.card:hover {
+  border-color: rgba(2, 132, 199, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+}
+.label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.value {
+  margin: 8px 0 4px;
+  font-size: 25px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+.ecs-value {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: normal;
+  margin: 12px 0 6px;
+}
+.ecs-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.ecs-dot.ok {
+  background: var(--green);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+}
+.ecs-dot.bad {
+  background: var(--red);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+.ecs-dot.pending {
+  background: var(--amber);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+}
+.sub {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.costs {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+.cost {
+  font-size: 11px;
+  color: var(--muted);
+}
+.cost b {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+  margin-top: 2px;
+  font-weight: 700;
+}
+.traffic-card {
+  position: relative;
+}
+.donut {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60px;
+  height: 60px;
+}
+.donut-bg, .donut-value {
+  fill: none;
+  stroke-width: 8;
+}
+.donut-bg {
+  stroke: #f1f5f9;
+}
+.donut-value {
+  stroke: var(--blue);
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dasharray .3s;
+}
+.donut text {
+  font-size: 11px;
+  font-weight: 800;
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+.traffic-card .value {
+  font-size: 24px;
+  max-width: 135px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.traffic-card .sub {
+  white-space: normal;
+  max-width: 135px;
+  line-height: 1.45;
+}
+.bottom {
+  display: grid;
+  grid-template-columns: 42fr 58fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+.panel {
+  padding: 16px 20px;
+}
+.panel-title {
+  font-size: 14px;
+  font-weight: 750;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.fact {
+  border-left: 1px solid var(--line);
+  padding-left: 16px;
+}
+.fact:first-child {
+  border: 0;
+  padding-left: 0;
+}
+.fact-label {
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.fact-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.panel-header .panel-title {
+  margin-bottom: 0;
+}
+.panel-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.panel-actions button {
+  height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.panel-actions svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+.setting-group {
+  margin-bottom: 16px;
+}
+.setting-label {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.segmented-control {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 8px;
+  border: 1px solid var(--line);
+}
+.status .segmented-control {
+  margin-bottom: 0;
+  width: 290px;
+  flex-shrink: 0;
+}
+.segment-btn {
+  flex: 1;
+  height: 36px;
+  border: 0;
+  border-radius: 7px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  box-shadow: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.segment-btn:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.4);
+  transform: none;
+}
+.segment-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.segment-btn.active[data-value="on"] {
+  color: var(--green);
+  background: var(--green-soft);
+  border: 1px solid rgba(16, 185, 129, 0.12);
+}
+.segment-btn.active[data-value="auto"] {
+  color: var(--blue);
+  background: var(--blue-soft);
+  border: 1px solid rgba(2, 132, 199, 0.12);
+}
+.segment-btn.active[data-value="off"] {
+  color: var(--red);
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.12);
+}
+.btn-icon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
+  flex-shrink: 0;
+}
+.control-help {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+.divider {
+  border: 0;
+  height: 1px;
+  background: var(--line);
+  margin: 16px 0;
+}
+.warning-banner {
+  background: var(--blue-soft);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slots.inactive {
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+.slots {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 4px 8px;
+  transition: border-color 0.2s;
+}
+.slot:focus-within {
+  border-color: #cbd5e1;
+}
+.slot span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.slot input {
+  width: 90px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 13px 'JetBrains Mono', ui-monospace, monospace;
+  text-align: center;
+}
+.slot input:focus {
+  outline: none;
+}
+.remove, .add {
+  height: 28px;
+  padding: 0 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: var(--muted);
+  box-shadow: none;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.remove {
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  height: 28px;
+  width: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.remove:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.18);
+  color: var(--red);
+}
+.add {
+  height: 38px;
+  padding: 0 14px;
+}
+.hint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.hint.error {
+  color: var(--red);
+}
+.hint.ok {
+  color: var(--green);
+}
+.footer {
+  margin-top: 16px;
+  text-align: left;
+  font-size: 11px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  font-weight: 500;
+}
+@media (max-width: 768px) {
+  .shell {
+    padding: 16px 12px;
+  }
+  .header {
+    height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 16px;
+  }
+  .header-right {
+    width: 100%;
+  }
+  .status {
+    height: auto;
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .status .segmented-control {
+    width: 100%;
+  }
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .card {
+    height: auto;
+    min-height: 128px;
+  }
+  .donut {
+    width: 60px;
+    height: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .bottom {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .panel {
+    height: auto;
+    min-height: 120px;
+  }
+
+  .slots {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .slot {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .slot input {
+    flex-grow: 1;
+    width: auto;
+  }
+
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .shell {
+    padding: 24px 20px;
+  }
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bottom {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+<main class="shell">
+  <header class="header">
+    <div class="brand">
+      <div class="logo">C</div>
+      <div>
+        <div class="eyebrow">INFRASTRUCTURE CONSOLE</div>
+        <h1>CDT Alive</h1>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="updated" id="updated">
+        <svg class="updated-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span id="countdown-text">正在加载…</span>
+      </span>
+    </div>
+  </header>
+
+  <section class="status">
+    <div class="status-left">
+      <i class="dot" id="dot"></i>
+      <div>
+        <div class="status-title" id="stateTitle">正在获取运行状态</div>
+        <div class="status-sub" id="stateText">数据每 30 秒自动刷新</div>
+      </div>
+    </div>
+    
+    <!-- 开关机模式分段控制 -->
+    <div class="segmented-control" id="powerModeGroup">
+      <button type="button" class="segment-btn" data-value="on" title="手动开启 ECS 实例，忽略定时停机">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+          <line x1="12" y1="2" x2="12" y2="12"></line>
+        </svg>
+        手动开机
+      </button>
+      <button type="button" class="segment-btn" data-value="auto" title="基于流量与定时停机时段定时开关">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        定时开关
+      </button>
+      <button type="button" class="segment-btn" data-value="off" title="手动关闭 ECS 实例，忽略定时开机">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+          <line x1="12" y1="2" x2="12" y2="12"></line>
+          <line x1="2" y1="2" x2="22" y2="22"></line>
+        </svg>
+        手动关机
+      </button>
+    </div>
+  </section>
+
+  <section class="cards">
+    <article class="card">
+      <div class="label">账户可用余额</div>
+      <div class="value" id="balance">—</div>
+      <div class="costs">
+        <div class="cost">24 小时费用<b id="cost24">—</b></div>
+        <div class="cost">月度费用预估<b id="costMonth">—</b></div>
+      </div>
+      <div class="sub" id="balanceTime"></div>
+    </article>
+    <article class="card traffic-card">
+      <div class="label">本月 CDT 流量</div>
+      <div class="value" id="traffic">—</div>
+      <div class="sub" id="trafficSub">—</div>
+      <svg class="donut" viewBox="0 0 64 64" aria-label="流量使用占比">
+        <circle class="donut-bg" cx="32" cy="32" r="25"/>
+        <circle class="donut-value" id="trafficRing" cx="32" cy="32" r="25"/>
+        <text x="32" y="33" id="trafficPercent">—</text>
+      </svg>
+    </article>
+    <article class="card">
+      <div class="label">ECS 当前状态</div>
+      <div class="value ecs-value"><i class="ecs-dot" id="ecsDot"></i><span id="ecs">—</span></div>
+      <div class="sub" id="ecsSub">—</div>
+    </article>
+    <article class="card">
+      <div class="label">实例运行时长</div>
+      <div class="value" id="runtime">—</div>
+      <div class="sub" id="runtimeSub">—</div>
+    </article>
+  </section>
+
+  <section class="bottom">
+    <article class="panel">
+      <div class="panel-title">运行概览</div>
+      <div class="facts">
+        <div class="fact">
+          <div class="fact-label">当前策略</div>
+          <div class="fact-value" id="reason">—</div>
+        </div>
+        <div class="fact">
+          <div class="fact-label">30 天定停 / 异常</div>
+          <div class="fact-value" id="stops">—</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div class="panel-title">每日定时停机</div>
+        <div class="panel-actions">
+          <button class="add" title="添加时段" onclick="addSlot()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            添加时段
+          </button>
+          <button class="primary" id="save" title="保存设置" onclick="saveSettings()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            保存设置
+          </button>
+        </div>
+      </div>
+      <div id="stopWindowNotice" class="warning-banner" style="display: none;"></div>
+      <div class="slots" id="slots"></div>
+      <div class="hint" id="saveHint"></div>
+    </article>
+  </section>
+
+  <footer class="footer">
+    <span id="last-collect-time">数据最新采集时间：正在加载…</span>
+  </footer>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const num = (v, d = 2) => v === null || v === undefined ? '—' : Number(v).toFixed(d);
+const time = t => t ? new Date(t * 1000).toLocaleString('zh-CN', {hour12: false}) : '暂无';
+const reasonMap = {
+  scheduled_stop_window: '定时停机窗口',
+  under_traffic_threshold: '流量充足',
+  traffic_threshold_reached: '流量已达上限',
+  low_balance: '余额不足',
+  forced_on: '手动开机',
+  forced_off: '手动关机'
+};
+
+let stopSlots = [];
+let settingsLoaded = false;
+let nextCheckAt = 0;
+let countdownSyncing = false;
+let currentPowerMode = 'auto';
+
+function setPowerModeActive(val) {
+  currentPowerMode = val;
+  document.querySelectorAll('.segment-btn').forEach(btn => {
+    if (btn.getAttribute('data-value') === val) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+  
+  const isAuto = val === 'auto';
+  const notice = $('stopWindowNotice');
+  const slotsEl = $('slots');
+  if (notice && slotsEl) {
+    if (isAuto) {
+      notice.style.display = 'none';
+      slotsEl.classList.remove('inactive');
+    } else {
+      notice.style.display = 'flex';
+      notice.textContent = `当前处于手动模式（${val === 'on' ? '手动开机' : '手动关机'}），定时停机时段暂不生效`;
+      slotsEl.classList.add('inactive');
+    }
+  }
+}
+
+function renderCountdown() {
+  if (!nextCheckAt) return;
+  let remaining = Math.max(0, Math.ceil((nextCheckAt - Date.now()) / 1000));
+  let mins = Math.floor(remaining / 60);
+  let secs = remaining % 60;
+  const icon = document.querySelector('.updated-icon');
+  const txt = $('countdown-text');
+  if (!txt) return;
+  
+  if (remaining) {
+    if (icon) icon.classList.remove('syncing');
+    txt.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    return;
+  }
+  if (icon) icon.classList.add('syncing');
+  txt.textContent = '即将执行';
+  if (!countdownSyncing) {
+    countdownSyncing = true;
+    setTimeout(async () => {
+      await refresh();
+      countdownSyncing = false;
+    }, 1000);
+  }
+}
+
+async function refreshFromCountdown() {
+  if (countdownSyncing) return;
+  countdownSyncing = true;
+  nextCheckAt = Date.now();
+  $('countdown-text').textContent = '00:00';
+  document.querySelector('.updated-icon')?.classList.add('syncing');
+  try {
+    const response = await fetch('/api/run', {method: 'POST'});
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw Error(data.detail || '刷新失败');
+    }
+    await refresh();
+  } catch (error) {
+    stateTitle.textContent = '刷新失败';
+    stateText.textContent = error.message;
+  } finally {
+    countdownSyncing = false;
+  }
+}
+
+function renderSlots() {
+  const container = $('slots');
+  container.innerHTML = '';
+  for (let i = 0; i < stopSlots.length; i++) {
+    let s = stopSlots[i];
+    let el = document.createElement('div');
+    el.className = 'slot';
+    el.innerHTML = `<input type="time" value="${s.start}" aria-label="开始时间"><span>至</span><input type="time" value="${s.end}" aria-label="结束时间">${stopSlots.length > 1 ? '<button class="remove" title="删除时段">×</button>' : ''}`;
+    
+    let inputs = el.querySelectorAll('input');
+    inputs[0].oninput = e => stopSlots[i].start = e.target.value;
+    inputs[1].oninput = e => stopSlots[i].end = e.target.value;
+    
+    let remove = el.querySelector('.remove');
+    if (remove) {
+      remove.onclick = () => {
+        stopSlots.splice(i, 1);
+        renderSlots();
+      };
+    }
+    container.appendChild(el);
+  }
+}
+
+function addSlot() {
+  stopSlots.push({start: '00:00', end: '00:00'});
+  renderSlots();
+}
+
+async function refresh() {
+  try {
+    const [d, s] = await Promise.all([
+      fetch('/api/dashboard', {cache: 'no-store'}).then(x => x.json()),
+      fetch('/api/settings', {cache: 'no-store'}).then(x => x.json())
+    ]);
+    
+    if (!settingsLoaded) {
+      stopSlots = (s.daily_stop_windows || []).map(x => {
+        let [a, b] = x.split('-');
+        return {start: a, end: b};
+      });
+      if (!stopSlots.length) addSlot();
+      else renderSlots();
+      settingsLoaded = true;
+    }
+    
+    // Always sync power mode to ensure UI consistency if changed elsewhere
+    if (s && s.power_mode) {
+      setPowerModeActive(s.power_mode);
+    }
+    
+    let r = d.last_run || {};
+    let b = d.balance || {};
+    let e = d.ecs || {};
+    let scheduled = r.reason === 'scheduled_stop_window';
+    let stateMap = {Running: '运行中', Stopped: '已停止', Starting: '启动中', Stopping: '停止中'};
+    let rawState = e.state || ({already_stopped: 'Stopped', already_running: 'Running'}[r.action]);
+    let used = r.traffic_gb;
+    let limit = r.traffic_threshold_gb;
+    let percent = used === undefined || !limit ? null : Math.max(0, Math.min(100, (limit - used) / limit * 100));
+    
+    nextCheckAt = (d.next_run_at || ((r.timestamp || Date.now() / 1000) + (d.run_interval_seconds || 300))) * 1000;
+    renderCountdown();
+    
+    if (scheduled) {
+      dot.className = 'dot warn';
+      stateTitle.textContent = '定时停机中';
+      stateText.textContent = '当前处于设定的每日停机时段';
+    } else if (r.reason === 'forced_off') {
+      dot.className = 'dot warn';
+      stateTitle.textContent = '已手动关机';
+      stateText.textContent = '实例已手动关闭并保持停止状态';
+    } else if (r.reason === 'forced_on') {
+      dot.className = 'dot';
+      stateTitle.textContent = '服务手动运行中';
+      stateText.textContent = '实例已手动开启并保持运行状态';
+    } else if (r.reason === 'traffic_threshold_reached') {
+      dot.className = 'dot danger';
+      stateTitle.textContent = '流量超限停机';
+      stateText.textContent = '本月 CDT 流量已达上限，已强制停机';
+    } else if (r.reason === 'low_balance') {
+      dot.className = 'dot danger';
+      stateTitle.textContent = '账户余额不足';
+      stateText.textContent = '可用余额低于阈值，已执行停机';
+    } else {
+      dot.className = 'dot';
+      stateTitle.textContent = '服务运行正常';
+      stateText.textContent = '容器每 5 分钟自动检查一次';
+    }
+    // Removed redundant action badge text assignment
+    balance.textContent = b.available_cny === undefined ? '暂无' : num(b.available_cny) + ' CNY';
+    cost24.textContent = b.available_cny === undefined ? '—' : num(b.spent_24h_cny) + ' CNY';
+    costMonth.textContent = b.available_cny === undefined ? '—' : num(b.estimated_monthly_cny) + ' CNY';
+    balanceTime.textContent = '';
+    
+    $('last-collect-time').textContent = b.updated_at ? '数据最新采集时间：' + time(b.updated_at) : '数据最新采集时间：暂无';
+    traffic.textContent = used === undefined ? '暂无' : num(used) + ' GB';
+    trafficSub.textContent = used === undefined ? '定时停机期间不查询流量' : '阈值 ' + num(limit) + ' · 日均可用 ' + num(r.daily_remaining_gb) + ' GB';
+    trafficPercent.textContent = percent === null ? '—' : Math.round(percent) + '%';
+    
+    trafficRing.style.strokeDasharray = percent === null ? '0 157.08' : `${percent * 1.5708} 157.08`;
+    ecs.textContent = stateMap[rawState] || '暂无';
+    ecsDot.className = 'ecs-dot ' + (rawState === 'Running' ? 'ok' : rawState === 'Stopped' ? 'bad' : 'pending');
+    ecsSub.textContent = scheduled ? '计划停机状态' :
+      (rawState === 'Starting' || rawState === 'Stopping'
+        ? '状态切换中，每 15 秒检查一次'
+        : '来自最近一次状态检查');
+    runtime.textContent = e.running_days === null || e.running_days === undefined ? '-' : num(e.running_days) + ' 天';
+    runtimeSub.textContent = scheduled ? '停机状态持续中' : '连续运行时长';
+    reason.textContent = reasonMap[r.reason] || '暂无';
+    stops.textContent = (e.scheduled_stops_30d ?? '—') + ' / ' + (e.unexpected_stops_30d ?? '—') + ' 次';
+  } catch (e) {
+    stateTitle.textContent = '暂时无法获取数据';
+    stateText.textContent = '请检查容器服务';
+  }
+}
+
+async function saveSettings() {
+  const windows = stopSlots.map(slot => `${slot.start}-${slot.end}`);
+  const hint = $('saveHint');
+  if (windows.some(window => window.startsWith('-') || window.endsWith('-') || window.slice(0, 5) === window.slice(6))) {
+    hint.textContent = '请为每个时段选择不同的开始和结束时间';
+    hint.className = 'hint error';
+    return;
+  }
+  save.disabled = true;
+  hint.textContent = '保存并执行中…';
+  hint.className = 'hint';
+  try {
+    const response = await fetch('/api/settings', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({daily_stop_windows: windows, power_mode: currentPowerMode}),
+    });
+    const data = await response.json();
+    if (!response.ok) throw Error(data.detail || '保存失败');
+    stopSlots = data.daily_stop_windows.map(window => {
+      const [start, end] = window.split('-');
+      return {start, end};
+    });
+    setPowerModeActive(data.power_mode);
+    renderSlots();
+    await refresh();
+    hint.textContent = '设置已保存并立即执行。';
+    hint.className = 'hint ok';
+    setTimeout(() => {
+      if (hint.textContent === '设置已保存并立即执行。') {
+        hint.textContent = '';
+        hint.className = 'hint';
+      }
+    }, 3000);
+  } catch (error) {
+    hint.textContent = error.message;
+    hint.className = 'hint error';
+  } finally {
+    save.disabled = false;
+  }
+}
+
+// Bind segment buttons click events
+document.querySelectorAll('.segment-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const val = btn.getAttribute('data-value');
+    if (val === currentPowerMode) return;
+    
+    const oldVal = currentPowerMode;
+    setPowerModeActive(val);
+    
+    const hint = $('saveHint');
+    hint.textContent = '正在保存模式…';
+    hint.className = 'hint';
+    
+    try {
+      const windows = stopSlots.map(s => `${s.start}-${s.end}`);
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({daily_stop_windows: windows, power_mode: val})
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.detail || '保存失败');
+      
+      await refresh();
+      hint.textContent = '模式已成功切换并执行。';
+      hint.className = 'hint ok';
+      setTimeout(() => {
+        if (hint.textContent === '模式已成功切换并执行。') {
+          hint.textContent = '';
+          hint.className = 'hint';
+        }
+      }, 3000);
+    } catch (error) {
+      hint.textContent = error.message;
+      hint.className = 'hint error';
+      setPowerModeActive(oldVal);
+    }
+  });
+});
+
+const countdownButton = $('updated');
+countdownButton.title = '点击立即刷新';
+countdownButton.style.cursor = 'pointer';
+countdownButton.setAttribute('role', 'button');
+countdownButton.tabIndex = 0;
+countdownButton.addEventListener('click', refreshFromCountdown);
+countdownButton.addEventListener('keydown', event => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    refreshFromCountdown();
+  }
+});
+
+refresh();
+setInterval(renderCountdown, 1000);
+setInterval(refresh, 30000);
+</script>
+</html>

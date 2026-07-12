@@ -1,0 +1,5 @@
+aliyun-python-sdk-core>=2.16,<3
+aliyun-python-sdk-ecs>=4.24,<5
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+PyYAML>=6,<7
