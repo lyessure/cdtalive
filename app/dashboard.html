@@ -922,11 +922,19 @@ async function refreshFromCountdown() {
 function renderSlots() {
   const container = $('slots');
   container.innerHTML = '';
+  if (!stopSlots.length) {
+    let emptyHint = document.createElement('div');
+    emptyHint.className = 'empty-slots-hint';
+    emptyHint.style.cssText = 'color: var(--muted); font-size: 13px; padding: 4px 0;';
+    emptyHint.textContent = '暂无停机时段';
+    container.appendChild(emptyHint);
+    return;
+  }
   for (let i = 0; i < stopSlots.length; i++) {
     let s = stopSlots[i];
     let el = document.createElement('div');
     el.className = 'slot';
-    el.innerHTML = `<input type="time" value="${s.start}" aria-label="开始时间"><span>至</span><input type="time" value="${s.end}" aria-label="结束时间">${stopSlots.length > 1 ? '<button class="remove" title="删除时段">×</button>' : ''}`;
+    el.innerHTML = `<input type="time" value="${s.start}" aria-label="开始时间"><span>至</span><input type="time" value="${s.end}" aria-label="结束时间"><button class="remove" title="删除时段">×</button>`;
     
     let inputs = el.querySelectorAll('input');
     inputs[0].oninput = e => stopSlots[i].start = e.target.value;
@@ -960,8 +968,7 @@ async function refresh() {
         let [a, b] = x.split('-');
         return {start: a, end: b};
       });
-      if (!stopSlots.length) addSlot();
-      else renderSlots();
+      renderSlots();
       settingsLoaded = true;
     }
     
