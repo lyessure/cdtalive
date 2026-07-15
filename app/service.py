@@ -2,7 +2,7 @@ import calendar
 import json
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from aliyunsdkcore.client import AcsClient
@@ -180,6 +180,21 @@ class CdtService:
             if (start < end and start <= current < end) or (start > end and (current >= start or current < end)):
                 return True
         return False
+
+    @staticmethod
+    def next_stop_window_boundary(windows, now=None):
+        """Return the next daily stop-window boundary in local time."""
+        now = now or datetime.now()
+        candidates = []
+        for window in windows:
+            start_text, end_text = window.split("-", 1)
+            for value in (start_text, end_text):
+                hour, minute = map(int, value.strip().split(":"))
+                candidate = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                if candidate <= now:
+                    candidate += timedelta(days=1)
+                candidates.append(candidate)
+        return min(candidates) if candidates else None
 
     def _save_status(self, result):
         data_dir().mkdir(parents=True, exist_ok=True)
