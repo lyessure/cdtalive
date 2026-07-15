@@ -228,6 +228,25 @@ class CdtService:
         except (OSError, json.JSONDecodeError):
             return default
 
+    @staticmethod
+    def _spent_since(balance_history, since_timestamp):
+        """Sum recorded balance decreases whose ending sample is in the period."""
+        samples = []
+        for item in balance_history:
+            try:
+                samples.append((float(item["timestamp"]), float(item["available_amount"])))
+            except (KeyError, TypeError, ValueError):
+                continue
+        samples.sort(key=lambda sample: sample[0])
+
+        spent = 0.0
+        previous_amount = None
+        for timestamp, amount in samples:
+            if previous_amount is not None and timestamp >= since_timestamp:
+                spent += max(previous_amount - amount, 0)
+            previous_amount = amount
+        return spent
+
     def dashboard(self) -> dict:
         """Return only the most recent values needed by the UI, never history."""
         result = self._read_json(self.status_file, self.last_result)
@@ -242,10 +261,16 @@ class CdtService:
         if latest_balance:
             baseline = min(balance_history, key=lambda item: abs(item.get("timestamp", 0) - (latest_balance["timestamp"] - 86400)))
             spent = max(0, baseline.get("available_amount", 0) - latest_balance.get("available_amount", 0))
-            days = calendar.monthrange(datetime.now().year, datetime.now().month)[1]
+            now = datetime.now()
+            month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            days = calendar.monthrange(now.year, now.month)[1]
             balance = {
                 "available_cny": latest_balance.get("available_amount", 0),
                 "spent_24h_cny": round(spent, 2),
+                "spent_current_month_cny": round(
+                    self._spent_since(balance_history, month_start.timestamp()),
+                    2,
+                ),
                 "estimated_monthly_cny": round(spent * days, 2),
                 "updated_at": latest_balance.get("timestamp"),
             }
@@ -311,7 +336,10 @@ class CdtService:
         if not isinstance(balance_history, list):
             balance_history = []
         balance_history.append({"timestamp": result["timestamp"], "available_amount": balance})
-        cutoff = result["timestamp"] - 48 * 86400
+        now = datetime.fromtimestamp(result["timestamp"])
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        previous_month_end = current_month_start - timedelta(seconds=1)
+        cutoff = previous_month_end.replace(day=1, hour=0, minute=0, second=0, microsecond=0).timestamp()
         self.balance_file.write_text(
             json.dumps([item for item in balance_history if item.get("timestamp", 0) >= cutoff], ensure_ascii=False),
             encoding="utf-8",

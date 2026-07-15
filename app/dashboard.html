@@ -306,13 +306,15 @@ button:active {
   white-space: nowrap;
 }
 .costs {
-  display: flex;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
   margin-top: 8px;
 }
 .cost {
   font-size: 11px;
   color: var(--muted);
+  white-space: nowrap;
 }
 .cost b {
   display: block;
@@ -764,7 +766,8 @@ button:active {
       <div class="value" id="balance">—</div>
       <div class="costs">
         <div class="cost">24 小时费用<b id="cost24">—</b></div>
-        <div class="cost">月度费用预估<b id="costMonth">—</b></div>
+        <div class="cost">本月已消费<b id="costCurrentMonth">—</b></div>
+        <div class="cost">月度预估<b id="costMonth">—</b></div>
       </div>
       <div class="sub" id="balanceTime"></div>
     </article>
@@ -1017,8 +1020,9 @@ async function refresh() {
     }
     // Removed redundant action badge text assignment
     balance.textContent = b.available_cny === undefined ? '暂无' : num(b.available_cny) + ' CNY';
-    cost24.textContent = b.available_cny === undefined ? '—' : num(b.spent_24h_cny) + ' CNY';
-    costMonth.textContent = b.available_cny === undefined ? '—' : num(b.estimated_monthly_cny) + ' CNY';
+    cost24.textContent = b.available_cny === undefined ? '—' : num(b.spent_24h_cny);
+    costCurrentMonth.textContent = b.available_cny === undefined ? '—' : num(b.spent_current_month_cny);
+    costMonth.textContent = b.available_cny === undefined ? '—' : num(b.estimated_monthly_cny);
     balanceTime.textContent = '';
     
     $('last-collect-time').textContent = b.updated_at ? '数据最新采集时间：' + time(b.updated_at) : '数据最新采集时间：暂无';
