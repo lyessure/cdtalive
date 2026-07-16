@@ -1,6 +1,8 @@
 services:
   cdtalive:
-    build: .
+    build:
+      context: .
+      target: ${CDT_RUNTIME:-python}
     container_name: cdtalive
     restart: unless-stopped
     env_file:
@@ -9,6 +11,8 @@ services:
     environment:
       CDT_CONFIG_FILE: /data/cdtalive.yaml
       CDT_DATA_DIR: /data
+      CDT_DB_FILE: /data/cdtalive.db
+      CDT_WEB_ADDR: 0.0.0.0:8080
     ports:
       - "127.0.0.1:${CDT_WEB_PORT:-5201}:8080"
     volumes:

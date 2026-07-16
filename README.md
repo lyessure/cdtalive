@@ -11,11 +11,21 @@ git clone https://github.com/lyessure/cdtalive.git
 cd cdtalive
 ```
 
-启动服务：
+默认构建并启动原 Python 版：
 
 ```bash
 docker compose up -d --build
 ```
+
+选择 Go 版：
+
+```bash
+CDT_RUNTIME=go docker compose up -d --build
+```
+
+也可以在 `.env` 中设置 `CDT_RUNTIME=go`，之后继续使用普通的 `docker compose up -d --build`。
+
+> **运行版本说明：** 请在首次部署时选择 Python 或 Go，并且同一时间只能运行一个版本。两版共用 `cdtalive.yaml`，但 Python 将运行历史保存为 JSON，Go 将运行历史保存到 SQLite；两种格式不互通，切换版本后历史统计不会连续。本项目不提供运行历史转换功能。
 
 服务为安全起见默认仅绑定本机回环地址。部署服务器本机可通过 `http://127.0.0.1:5201` 访问，填写 AccessKey、ECS 实例 ID 和阈值即可开始监控；需要远程访问时，推荐通过 Caddy 或 Nginx 反向代理并配置 HTTPS 与访问控制。
 
@@ -66,8 +76,16 @@ docker compose up -d --build
 
 ### 使用 Docker Compose 部署
 
+Python 版（默认）：
+
 ```bash
 docker compose up -d --build
+```
+
+Go 版：
+
+```bash
+CDT_RUNTIME=go docker compose up -d --build
 ```
 
 服务为安全起见默认仅监听 `127.0.0.1` 的 `5201` 端口。通过部署服务器本机访问：
@@ -125,6 +143,7 @@ power_mode: auto
 | `CDT_DAILY_STOP_WINDOWS` | 停机时段，多个时段用英文逗号分隔 | 空 |
 | `CDT_POWER_MODE` | `on`、`auto` 或 `off` | `auto` |
 | `CDT_WEB_PORT` | 宿主机 Web 端口，仅 Compose 使用 | `5201` |
+| `CDT_RUNTIME` | Docker 构建版本，`python` 或 `go` | `python` |
 
 `daily_stop_windows` 的格式为 `HH:MM-HH:MM`。例如 `22:00-07:00` 表示跨天停机，`01:00-06:00,12:00-13:00` 表示两个停机窗口。
 
@@ -140,7 +159,7 @@ power_mode: auto
 - 每日停机时段与电源模式设置。
 - 手动立即执行一次检查。
 
-“本月已消费金额”按服务器本地时区的自然月，累计 `cdtbal.json` 中相邻余额快照的下降量；充值等余额上涨不会抵消已记录消费。首次启用该功能的当月只能统计现有余额记录覆盖的时段，完整自然月数据将从下一个月开始形成。
+“本月已消费金额”按服务器本地时区的自然月，累计相邻余额快照的下降量；充值等余额上涨不会抵消已记录消费。Python 版从 `cdtbal.json` 读取余额快照，Go 版从 SQLite 读取。首次启用该功能的当月只能统计现有余额记录覆盖的时段，完整自然月数据将从下一个月开始形成。
 
 服务在 ECS 启停过渡状态期间会每 15 秒仅刷新实例状态；其他情况下按配置的检查间隔执行完整检查。到达每日停机时段的开始或结束时间时，会额外立即执行一次完整检查，且不会改变原有的常规检查周期。
 
@@ -155,12 +174,15 @@ Compose 将本地 `./data` 目录挂载到容器 `/data`。其中包含：
 | `latest_metrics.json` | 最近一次流量指标 |
 | `cdtbal.json` | 当月及上月余额记录，用于计算近 24 小时和自然月消费 |
 | `ecs_status_history.json` | ECS 状态与近 30 天停机记录 |
+| `cdtalive.db` | Go 版的运行状态、指标、余额快照及停机记录 |
+
+JSON 文件仅由 Python 版使用，`cdtalive.db` 仅由 Go 版使用。它们不会互相同步；更换运行版本不会带上另一个版本的历史统计。
 
 请勿将 `data/`、`.env` 或任何 AccessKey 提交到 Git 仓库。项目已在 `.gitignore` 中忽略这些路径。
 
 ## 本地开发
 
-需要 Python 3.12 或更高版本：
+Python 版需要 Python 3.12 或更高版本：
 
 ```bash
 python -m venv .venv
@@ -169,6 +191,15 @@ pip install -r requirements.txt
 export CDT_CONFIG_FILE="$PWD/data/cdtalive.yaml"
 export CDT_DATA_DIR="$PWD/data"
 uvicorn app.web:app --reload --host 127.0.0.1 --port 8080
+```
+
+Go 版使用普通 Go 构建，不需要设置 CGO；SQLite 驱动为纯 Go 实现：
+
+```bash
+go build -buildvcs=false -o cdtalive ./cmd/cdtalive
+export CDT_CONFIG_FILE="$PWD/data/cdtalive.yaml"
+export CDT_DB_FILE="$PWD/data/cdtalive.db"
+./cdtalive
 ```
 
 访问 `http://127.0.0.1:8080` 完成初始化。
