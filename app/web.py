@@ -13,6 +13,7 @@ from .service import CdtService, TRANSITION_POLL_INTERVAL_SECONDS
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 service = CdtService()
 init_event = asyncio.Event()
+BOUNDARY_EXECUTION_DELAY_SECONDS = 1
 
 
 async def scheduler():
@@ -57,7 +58,11 @@ async def scheduler():
         try:
             config = load_config()
             boundary = service.next_stop_window_boundary(config["daily_stop_windows"])
-            next_boundary_at = boundary.timestamp() if boundary else None
+            next_boundary_at = (
+                boundary.timestamp() + BOUNDARY_EXECUTION_DELAY_SECONDS
+                if boundary
+                else None
+            )
         except Exception as exc:
             logging.exception("计算下一次定时停机边界失败: %s", exc)
             next_boundary_at = None

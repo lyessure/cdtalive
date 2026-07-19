@@ -13,6 +13,8 @@ type Scheduler struct {
 	wake    chan struct{}
 }
 
+const boundaryExecutionDelay = time.Second
+
 func NewScheduler(service *Service) *Scheduler {
 	return &Scheduler{service: service, wake: make(chan struct{}, 1)}
 }
@@ -78,7 +80,7 @@ func (s *Scheduler) Run(ctx context.Context) {
 			log.Printf("计算下一次定时停机边界失败: %v", boundaryErr)
 			nextBoundary = time.Time{}
 		} else if exists {
-			nextBoundary = boundary
+			nextBoundary = boundary.Add(boundaryExecutionDelay)
 		} else {
 			nextBoundary = time.Time{}
 		}
