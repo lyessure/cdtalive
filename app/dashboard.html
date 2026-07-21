@@ -368,10 +368,14 @@ button:active {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.traffic-card .sub {
-  white-space: normal;
+.traffic-stats {
   max-width: 135px;
-  line-height: 1.45;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.traffic-stats div {
+  white-space: nowrap;
 }
 .bottom {
   display: grid;
@@ -780,7 +784,11 @@ button:active {
     <article class="card traffic-card">
       <div class="label">本月 CDT 流量</div>
       <div class="value" id="traffic">—</div>
-      <div class="sub" id="trafficSub">—</div>
+      <div class="traffic-stats">
+        <div id="trafficToday">今日 —</div>
+        <div id="trafficThreshold">阈值 —</div>
+        <div id="trafficDailyRemaining">日均可用 —</div>
+      </div>
       <svg class="donut" viewBox="0 0 64 64" aria-label="流量使用占比">
         <circle class="donut-bg" cx="32" cy="32" r="25"/>
         <circle class="donut-value" id="trafficRing" cx="32" cy="32" r="25"/>
@@ -1042,7 +1050,9 @@ async function refresh() {
     
     $('last-collect-time').textContent = b.updated_at ? '数据最新采集时间：' + time(b.updated_at) : '数据最新采集时间：暂无';
     traffic.textContent = used === undefined ? '暂无' : num(used) + ' GB';
-    trafficSub.textContent = used === undefined ? '定时停机期间不查询流量' : '阈值 ' + num(limit) + ' · 日均可用 ' + num(r.daily_remaining_gb) + ' GB';
+    $('trafficToday').textContent = '今日 ' + num(r.today_traffic_gb ?? 0) + ' GB';
+    $('trafficThreshold').textContent = '阈值 ' + num(limit) + ' GB';
+    $('trafficDailyRemaining').textContent = '日均可用 ' + num(r.daily_remaining_gb) + ' GB';
     trafficPercent.textContent = percent === null ? '—' : Math.round(percent) + '%';
     
     trafficRing.style.strokeDasharray = percent === null ? '0 157.08' : `${percent * 1.5708} 157.08`;

@@ -36,6 +36,10 @@ class CdtService:
     def metrics_file(self) -> Path:
         return data_dir() / "latest_metrics.json"
 
+    @property
+    def traffic_history_file(self) -> Path:
+        return data_dir() / "traffic_history.json"
+
     def _client(self, config):
         return AcsClient(config["access_key_id"], config["access_key_secret"], config["region_id"])
 
@@ -269,6 +273,23 @@ class CdtService:
             for key in ("traffic_gb", "traffic_threshold_gb", "daily_remaining_gb"):
                 if key in metrics and key not in result:
                     result[key] = metrics[key]
+        traffic_history = self._read_json(self.traffic_history_file, [])
+        now = datetime.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        result["today_traffic_gb"] = 0
+        today_samples = []
+        if isinstance(traffic_history, list):
+            before_today = [item for item in traffic_history if item.get("timestamp", 0) < today_start]
+            today_samples = [item for item in traffic_history if item.get("timestamp", 0) >= today_start]
+            if today_samples:
+                try:
+                    baseline = max(before_today, key=lambda item: item["timestamp"])["traffic_gb"] if before_today and now.day != 1 else 0
+                    latest = max(today_samples, key=lambda item: item["timestamp"])["traffic_gb"]
+                    result["today_traffic_gb"] = round(max(float(latest) - float(baseline), 0), 4)
+                except (KeyError, TypeError, ValueError):
+                    pass
+        if not today_samples and result.get("traffic_gb") is not None:
+            result["today_traffic_gb"] = result["traffic_gb"]
         balance_history = self._read_json(self.balance_file, [])
         latest_balance = balance_history[-1] if isinstance(balance_history, list) and balance_history else None
         balance = None
@@ -365,6 +386,15 @@ class CdtService:
 
         traffic = self._traffic_gb(client)
         result["traffic_gb"] = round(traffic, 4)
+        traffic_history = self._read_json(self.traffic_history_file, [])
+        if not isinstance(traffic_history, list):
+            traffic_history = []
+        traffic_history.append({"timestamp": result["timestamp"], "traffic_gb": result["traffic_gb"]})
+        traffic_cutoff = (datetime.fromtimestamp(result["timestamp"]).replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)).timestamp()
+        self.traffic_history_file.write_text(
+            json.dumps([item for item in traffic_history if item.get("timestamp", 0) >= traffic_cutoff], ensure_ascii=False),
+            encoding="utf-8",
+        )
         days_in_month = calendar.monthrange(datetime.now().year, datetime.now().month)[1]
         days_left = max(days_in_month - datetime.now().day + 1, 1)
         result["daily_remaining_gb"] = round(max(config["traffic_threshold_gb"] - traffic, 0) / days_left, 4)

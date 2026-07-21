@@ -130,6 +130,9 @@ func (s *Service) RunOnce() (map[string]any, error) {
 		return nil, err
 	}
 	trafficRounded := round(traffic, 4)
+	if err := s.store.AddTraffic(now.Unix(), trafficRounded); err != nil {
+		return nil, err
+	}
 	daysInMonth := time.Date(now.Year(), now.Month()+1, 0, 0, 0, 0, 0, s.location).Day()
 	daysLeft := max(daysInMonth-now.Day()+1, 1)
 	dailyRemaining := round(math.Max(cfg.TrafficThresholdGB-traffic, 0)/float64(daysLeft), 4)
@@ -289,6 +292,14 @@ func (s *Service) Dashboard() (map[string]any, error) {
 		setIfMissing(result, "traffic_gb", metrics.TrafficGB)
 		setIfMissing(result, "traffic_threshold_gb", metrics.TrafficThreshold)
 		setIfMissing(result, "daily_remaining_gb", metrics.DailyRemainingGB)
+	}
+	result["today_traffic_gb"] = 0.0
+	todayTraffic, todayTrafficAvailable, err := s.store.TodayTraffic(time.Now().In(s.location))
+	if err != nil {
+		return nil, err
+	}
+	if todayTrafficAvailable {
+		result["today_traffic_gb"] = round(math.Max(todayTraffic, 0), 4)
 	}
 
 	samples, err := s.store.BalanceSamples()

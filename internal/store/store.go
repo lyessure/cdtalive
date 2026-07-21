@@ -117,6 +117,38 @@ func (s *Store) AddBalance(timestamp int64, available float64) error {
 	return err
 }
 
+func (s *Store) AddTraffic(timestamp int64, trafficGB float64) error {
+	_, err := s.db.Exec("INSERT INTO traffic_samples(timestamp, traffic_gb) VALUES(?, ?)", timestamp, trafficGB)
+	return err
+}
+
+// TodayTraffic returns the traffic used since local midnight. If no earlier
+// baseline exists, traffic is calculated from zero.
+func (s *Store) TodayTraffic(now time.Time) (float64, bool, error) {
+	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).Unix()
+	var baseline, latest float64
+	err := s.db.QueryRow(`SELECT traffic_gb FROM traffic_samples WHERE timestamp >= ?
+		ORDER BY timestamp DESC, id DESC LIMIT 1`, start).Scan(&latest)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, false, err
+	}
+	if now.Day() == 1 {
+		return latest, true, nil // CDT's cumulative traffic counter resets each month.
+	}
+	err = s.db.QueryRow(`SELECT traffic_gb FROM traffic_samples WHERE timestamp < ?
+		ORDER BY timestamp DESC, id DESC LIMIT 1`, start).Scan(&baseline)
+	if errors.Is(err, sql.ErrNoRows) {
+		return latest, true, nil
+	}
+	if err != nil {
+		return 0, false, err
+	}
+	return latest - baseline, true, nil
+}
+
 func (s *Store) BalanceSamples() ([]BalanceSample, error) {
 	rows, err := s.db.Query("SELECT timestamp, available_amount FROM balance_samples ORDER BY timestamp, id")
 	if err != nil {
@@ -204,7 +236,8 @@ func (s *Store) StopCounts(cutoff int64) (scheduled, unexpected int, err error) 
 
 func (s *Store) Prune(balanceCutoff, eventCutoff int64) error {
 	_, err := s.db.Exec(`DELETE FROM balance_samples WHERE timestamp < ?;
-		DELETE FROM stop_events WHERE timestamp < ?;`, balanceCutoff, eventCutoff)
+		DELETE FROM traffic_samples WHERE timestamp < ?;
+		DELETE FROM stop_events WHERE timestamp < ?;`, balanceCutoff, balanceCutoff, eventCutoff)
 	return err
 }
 
@@ -220,12 +253,18 @@ func (s *Store) initializeSchema() error {
 			traffic_threshold_gb REAL NOT NULL,
 			daily_remaining_gb REAL NOT NULL
 		);
-		CREATE TABLE IF NOT EXISTS balance_samples (
+	CREATE TABLE IF NOT EXISTS balance_samples (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			timestamp INTEGER NOT NULL,
 			available_amount REAL NOT NULL
-		);
-		CREATE INDEX IF NOT EXISTS idx_balance_timestamp ON balance_samples(timestamp);
+	);
+	CREATE INDEX IF NOT EXISTS idx_balance_timestamp ON balance_samples(timestamp);
+	CREATE TABLE IF NOT EXISTS traffic_samples (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		timestamp INTEGER NOT NULL,
+		traffic_gb REAL NOT NULL
+	);
+	CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic_samples(timestamp);
 		CREATE TABLE IF NOT EXISTS ecs_state (
 			id INTEGER PRIMARY KEY CHECK(id=1),
 			last_status TEXT NOT NULL DEFAULT '',
