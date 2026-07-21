@@ -495,11 +495,15 @@ func cloudStartTimestamp(instance *aliyun.Instance, fallback int64) int64 {
 	if instance == nil || instance.StartTime == "" {
 		return fallback
 	}
-	parsed, err := time.Parse(time.RFC3339, instance.StartTime)
-	if err != nil {
-		return fallback
+	// 阿里云 DescribeInstances 的 StartTime 可能省略秒，同时兼容带秒格式，
+	// 避免将有效的云端启动时间误认为本次状态检查时间。
+	for _, layout := range []string{time.RFC3339, "2006-01-02T15:04Z07:00"} {
+		parsed, err := time.Parse(layout, instance.StartTime)
+		if err == nil {
+			return parsed.Unix()
+		}
 	}
-	return parsed.Unix()
+	return fallback
 }
 
 func spentSince(samples []store.BalanceSample, since int64) float64 {
