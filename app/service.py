@@ -308,6 +308,9 @@ class CdtService:
                 "running_days": round((now - startup) / 86400, 2)
                 if current_state in ("Running", "Starting") and startup and startup <= now
                 else None,
+                "running_seconds": now - startup
+                if current_state in ("Running", "Starting") and startup and startup <= now
+                else None,
                 "scheduled_stop_active": (
                     result.get("reason") == "scheduled_stop_window"
                     if result.get("reason")

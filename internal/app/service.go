@@ -334,8 +334,11 @@ func (s *Service) Dashboard() (map[string]any, error) {
 			currentState = value
 		}
 		var runningDays any
+		var runningSeconds any
 		if (currentState == "Running" || currentState == "Starting") && state.LastStartupTimestamp > 0 && state.LastStartupTimestamp <= now {
-			runningDays = round(float64(now-state.LastStartupTimestamp)/86400, 2)
+			elapsedSeconds := now - state.LastStartupTimestamp
+			runningSeconds = elapsedSeconds
+			runningDays = round(float64(elapsedSeconds)/86400, 2)
 		}
 		scheduledActive := state.ScheduledStopActive
 		if reason, ok := result["reason"].(string); ok && reason != "" {
@@ -347,6 +350,7 @@ func (s *Service) Dashboard() (map[string]any, error) {
 			"scheduled_stops_30d":   scheduled,
 			"unexpected_stops_30d":  unexpected,
 			"running_days":          runningDays,
+			"running_seconds":       runningSeconds,
 			"scheduled_stop_active": scheduledActive,
 		}
 	}

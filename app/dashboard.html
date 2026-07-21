@@ -282,6 +282,12 @@ button:active {
   letter-spacing: normal;
   margin: 12px 0 6px;
 }
+#runtime {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: normal;
+  margin: 12px 0 6px;
+}
 .ecs-dot {
   width: 10px;
   height: 10px;
@@ -835,6 +841,15 @@ button:active {
 <script>
 const $ = id => document.getElementById(id);
 const num = (v, d = 2) => v === null || v === undefined ? '—' : Number(v).toFixed(d);
+const formatRuntime = seconds => {
+  const totalMinutes = Math.floor(Number(seconds) / 60);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days > 0) return `${days} 天 ${hours} 小时 ${minutes} 分钟`;
+  if (hours > 0) return `${hours} 小时 ${minutes} 分钟`;
+  return `${minutes} 分钟`;
+};
 const time = t => t ? new Date(t * 1000).toLocaleString('zh-CN', {hour12: false}) : '暂无';
 const reasonMap = {
   scheduled_stop_window: '定时停机窗口',
@@ -1038,7 +1053,7 @@ async function refresh() {
         ? '状态切换中，每 15 秒检查一次'
         : '来自最近一次状态检查');
     ecsSub.textContent = e.public_ip ? 'IP：' + e.public_ip : ecsStatusText;
-    runtime.textContent = e.running_days === null || e.running_days === undefined ? '-' : num(e.running_days) + ' 天';
+    runtime.textContent = e.running_seconds === null || e.running_seconds === undefined ? '-' : formatRuntime(e.running_seconds);
     runtimeSub.textContent = scheduled ? '停机状态持续中' : '连续运行时长';
     reason.textContent = reasonMap[r.reason] || '暂无';
     stops.textContent = (e.scheduled_stops_30d ?? '—') + ' / ' + (e.unexpected_stops_30d ?? '—') + ' 次';
