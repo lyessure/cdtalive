@@ -76,6 +76,20 @@ class CdtService:
         return instances[0] if instances else None
 
     @staticmethod
+    def _public_ip(instance):
+        if not instance:
+            return None
+        eip = instance.get("EipAddress", {})
+        if isinstance(eip, dict) and eip.get("IpAddress"):
+            return eip["IpAddress"]
+        public_ips = instance.get("PublicIpAddress", {})
+        if isinstance(public_ips, dict):
+            addresses = public_ips.get("IpAddress", [])
+            if isinstance(addresses, list) and addresses:
+                return addresses[0]
+        return None
+
+    @staticmethod
     def _cloud_start_timestamp(instance):
         if not instance:
             return None
@@ -142,7 +156,7 @@ class CdtService:
             stats["last_startup_timestamp"] = self._cloud_start_timestamp(instance) or now
         data_dir().mkdir(parents=True, exist_ok=True)
         stats_path.write_text(json.dumps(stats, ensure_ascii=False), encoding="utf-8")
-        return status
+        return status, self._public_ip(instance)
 
     def _start(self, client, instance_id):
         status = self._instance_status(client, instance_id)
@@ -210,7 +224,7 @@ class CdtService:
         result = dict(self.last_result)
         client = self._client(config)
         result["ecs_checked_at"] = int(time.time())
-        result["ecs_status"] = self._record_instance_state(
+        result["ecs_status"], result["ecs_public_ip"] = self._record_instance_state(
             client,
             config["ecs_instance_id"],
             result.get("ecs_status"),
@@ -282,6 +296,7 @@ class CdtService:
             current_state = result.get("ecs_status") or stats.get("last_status")
             status = {
                 "state": current_state,
+                "public_ip": result.get("ecs_public_ip"),
                 "scheduled_stops_30d": sum(
                     1 for timestamp in stats.get("scheduled_downtime_timestamps", [])
                     if isinstance(timestamp, (int, float)) and timestamp >= now - 30 * 86400
@@ -382,7 +397,7 @@ class CdtService:
                 result["action"] = self._start(client, config["ecs_instance_id"])
                 result["reason"] = "under_traffic_threshold"
                 result["ecs_status"] = "Running" if result["action"] == "already_running" else "Starting"
-        result["ecs_status"] = self._record_instance_state(
+        result["ecs_status"], result["ecs_public_ip"] = self._record_instance_state(
             client,
             config["ecs_instance_id"],
             result.get("ecs_status"),

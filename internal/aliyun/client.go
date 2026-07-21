@@ -16,6 +16,7 @@ type Instance struct {
 	ID        string
 	Status    string
 	StartTime string
+	PublicIP  string
 }
 
 type Client struct {
@@ -100,7 +101,7 @@ func (c *Client) Instances() ([]Instance, error) {
 	}
 	instances := make([]Instance, 0, len(response.Instances.Instance))
 	for _, item := range response.Instances.Instance {
-		instances = append(instances, Instance{ID: item.InstanceId, Status: item.Status, StartTime: item.StartTime})
+		instances = append(instances, instanceFromSDK(item))
 	}
 	return instances, nil
 }
@@ -117,7 +118,16 @@ func (c *Client) Instance(instanceID string) (*Instance, error) {
 		return nil, nil
 	}
 	item := response.Instances.Instance[0]
-	return &Instance{ID: item.InstanceId, Status: item.Status, StartTime: item.StartTime}, nil
+	instance := instanceFromSDK(item)
+	return &instance, nil
+}
+
+func instanceFromSDK(item ecs.Instance) Instance {
+	publicIP := item.EipAddress.IpAddress
+	if publicIP == "" && len(item.PublicIpAddress.IpAddress) > 0 {
+		publicIP = item.PublicIpAddress.IpAddress[0]
+	}
+	return Instance{ID: item.InstanceId, Status: item.Status, StartTime: item.StartTime, PublicIP: publicIP}
 }
 
 func (c *Client) Start(instanceID string) error {

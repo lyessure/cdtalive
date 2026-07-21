@@ -1033,10 +1033,11 @@ async function refresh() {
     trafficRing.style.strokeDasharray = percent === null ? '0 157.08' : `${percent * 1.5708} 157.08`;
     ecs.textContent = stateMap[rawState] || '暂无';
     ecsDot.className = 'ecs-dot ' + (rawState === 'Running' ? 'ok' : rawState === 'Stopped' ? 'bad' : 'pending');
-    ecsSub.textContent = scheduled ? '计划停机状态' :
+    let ecsStatusText = scheduled ? '计划停机状态' :
       (rawState === 'Starting' || rawState === 'Stopping'
         ? '状态切换中，每 15 秒检查一次'
         : '来自最近一次状态检查');
+    ecsSub.textContent = e.public_ip ? 'IP：' + e.public_ip : ecsStatusText;
     runtime.textContent = e.running_days === null || e.running_days === undefined ? '-' : num(e.running_days) + ' 天';
     runtimeSub.textContent = scheduled ? '停机状态持续中' : '连续运行时长';
     reason.textContent = reasonMap[r.reason] || '暂无';

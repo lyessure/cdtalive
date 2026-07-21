@@ -226,11 +226,12 @@ func (s *Service) RunOnce() (map[string]any, error) {
 
 	fallback, _ := result["ecs_status"].(string)
 	reason, _ := result["reason"].(string)
-	status, err := s.recordInstanceState(client, cfg.ECSInstanceID, fallback, reason)
+	status, publicIP, err := s.recordInstanceState(client, cfg.ECSInstanceID, fallback, reason)
 	if err != nil {
 		return nil, err
 	}
 	result["ecs_status"] = status
+	result["ecs_public_ip"] = publicIP
 	completed := map[string]any{"status": "完成"}
 	for key, value := range result {
 		completed[key] = value
@@ -261,11 +262,12 @@ func (s *Service) RefreshECSStatus() (map[string]any, error) {
 	result["ecs_checked_at"] = time.Now().Unix()
 	fallback, _ := result["ecs_status"].(string)
 	reason, _ := result["reason"].(string)
-	status, err := s.recordInstanceState(client, cfg.ECSInstanceID, fallback, reason)
+	status, publicIP, err := s.recordInstanceState(client, cfg.ECSInstanceID, fallback, reason)
 	if err != nil {
 		return nil, err
 	}
 	result["ecs_status"] = status
+	result["ecs_public_ip"] = publicIP
 	if err := s.store.SaveLastResult(result); err != nil {
 		return nil, err
 	}
@@ -341,6 +343,7 @@ func (s *Service) Dashboard() (map[string]any, error) {
 		}
 		ecsStatus = map[string]any{
 			"state":                 currentState,
+			"public_ip":             result["ecs_public_ip"],
 			"scheduled_stops_30d":   scheduled,
 			"unexpected_stops_30d":  unexpected,
 			"running_days":          runningDays,
@@ -383,11 +386,11 @@ func (s *Service) NextStopWindowBoundary(windows []string, now time.Time) (time.
 	return next, !next.IsZero(), nil
 }
 
-func (s *Service) recordInstanceState(client cloud, instanceID, fallbackStatus, reason string) (string, error) {
+func (s *Service) recordInstanceState(client cloud, instanceID, fallbackStatus, reason string) (string, string, error) {
 	now := time.Now().Unix()
 	instance, err := client.Instance(instanceID)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	status := fallbackStatus
 	if instance != nil && instance.Status != "" {
@@ -401,7 +404,7 @@ func (s *Service) recordInstanceState(client cloud, instanceID, fallbackStatus, 
 	}
 	state, err := s.store.ECSState()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	previousStatus := state.LastStatus
 	wasScheduled := state.ScheduledStopActive
@@ -423,9 +426,13 @@ func (s *Service) recordInstanceState(client cloud, instanceID, fallbackStatus, 
 		state.LastStartupTimestamp = cloudStartTimestamp(instance, now)
 	}
 	if err := s.store.RecordECSState(state, scheduledEvent, unexpectedEvent, now); err != nil {
-		return "", err
+		return "", "", err
 	}
-	return status, nil
+	publicIP := ""
+	if instance != nil {
+		publicIP = instance.PublicIP
+	}
+	return status, publicIP, nil
 }
 
 func (s *Service) start(client cloud, instanceID string) (string, error) {
