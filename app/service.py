@@ -55,7 +55,16 @@ class CdtService:
     def _traffic_gb(self, client) -> float:
         response = client.do_action_with_exception(self._request("cdt.aliyuncs.com", "2021-08-13", "ListCdtInternetTraffic"))
         payload = json.loads(response.decode())
-        return sum(item.get("Traffic", 0) for item in payload.get("TrafficDetails", [])) / 1024**3
+        traffic_bytes = 0.0
+        for item in payload.get("TrafficDetails", []):
+            value = item.get("Traffic", 0)
+            if value in (None, ""):
+                continue
+            try:
+                traffic_bytes += float(value)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"解析 CDT 流量失败: {value!r}") from exc
+        return traffic_bytes / 1024**3
 
     def _balance(self, client) -> float:
         response = client.do_action_with_exception(self._request("business.aliyuncs.com", "2017-12-14", "QueryAccountBalance"))
@@ -326,6 +335,7 @@ class CdtService:
                     1 for timestamp in stats.get("unexpected_downtime_timestamps", [])
                     if isinstance(timestamp, (int, float)) and timestamp >= now - 30 * 86400
                 ),
+                "last_started_at": startup if isinstance(startup, (int, float)) and startup > 0 else None,
                 "running_days": round((now - startup) / 86400, 2)
                 if current_state in ("Running", "Starting") and startup and startup <= now
                 else None,

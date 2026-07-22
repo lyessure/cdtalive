@@ -288,6 +288,10 @@ button:active {
   letter-spacing: normal;
   margin: 12px 0 6px;
 }
+#runtime.timestamp {
+  font-size: 14px;
+  font-weight: 500;
+}
 .ecs-dot {
   width: 10px;
   height: 10px;
@@ -801,7 +805,7 @@ button:active {
       <div class="sub" id="ecsSub">—</div>
     </article>
     <article class="card">
-      <div class="label">实例运行时长</div>
+      <div class="label" id="runtimeLabel">实例运行时长</div>
       <div class="value" id="runtime">—</div>
       <div class="sub" id="runtimeSub">—</div>
     </article>
@@ -1063,8 +1067,13 @@ async function refresh() {
         ? '状态切换中，每 15 秒检查一次'
         : '来自最近一次状态检查');
     ecsSub.textContent = e.public_ip ? 'IP：' + e.public_ip : ecsStatusText;
-    runtime.textContent = e.running_seconds === null || e.running_seconds === undefined ? '-' : formatRuntime(e.running_seconds);
-    runtimeSub.textContent = scheduled ? '停机状态持续中' : '连续运行时长';
+    const stopped = rawState === 'Stopped';
+    $('runtimeLabel').textContent = stopped ? '上次运行时间' : '实例运行时长';
+    runtime.classList.toggle('timestamp', stopped);
+    runtime.textContent = stopped
+      ? time(e.last_started_at)
+      : (e.running_seconds === null || e.running_seconds === undefined ? '-' : formatRuntime(e.running_seconds));
+    runtimeSub.textContent = stopped ? '' : '连续运行时长';
     reason.textContent = reasonMap[r.reason] || '暂无';
     stops.textContent = (e.scheduled_stops_30d ?? '—') + ' / ' + (e.unexpected_stops_30d ?? '—') + ' 次';
   } catch (e) {

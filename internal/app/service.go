@@ -360,6 +360,7 @@ func (s *Service) Dashboard() (map[string]any, error) {
 			"public_ip":             result["ecs_public_ip"],
 			"scheduled_stops_30d":   scheduled,
 			"unexpected_stops_30d":  unexpected,
+			"last_started_at":       nullableTimestamp(state.LastStartupTimestamp),
 			"running_days":          runningDays,
 			"running_seconds":       runningSeconds,
 			"scheduled_stop_active": scheduledActive,
