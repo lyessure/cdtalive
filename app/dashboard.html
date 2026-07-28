@@ -177,9 +177,18 @@ button:active {
 }
 .primary:disabled {
   opacity: .5;
-  cursor: wait;
+  cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+}
+.primary:disabled:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  transform: none;
 }
 .status {
   height: 64px;
@@ -834,7 +843,7 @@ button:active {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             添加时段
           </button>
-          <button class="primary" id="save" title="保存设置" onclick="saveSettings()">
+          <button class="primary" id="save" title="保存设置" onclick="saveSettings()" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
             保存设置
           </button>
@@ -873,10 +882,23 @@ const reasonMap = {
 };
 
 let stopSlots = [];
+let savedWindowsJson = '[]';
 let settingsLoaded = false;
 let nextCheckAt = 0;
 let countdownSyncing = false;
 let currentPowerMode = 'auto';
+
+function getCurrentWindowsJson() {
+  return JSON.stringify(stopSlots.map(s => `${s.start}-${s.end}`));
+}
+
+function updateSaveButtonState() {
+  const isModified = getCurrentWindowsJson() !== savedWindowsJson;
+  const saveBtn = $('save');
+  if (saveBtn) {
+    saveBtn.disabled = !isModified;
+  }
+}
 
 function setPowerModeActive(val) {
   currentPowerMode = val;
@@ -958,6 +980,7 @@ function renderSlots() {
     emptyHint.style.cssText = 'color: var(--muted); font-size: 13px; padding: 4px 0;';
     emptyHint.textContent = '暂无停机时段';
     container.appendChild(emptyHint);
+    updateSaveButtonState();
     return;
   }
   for (let i = 0; i < stopSlots.length; i++) {
@@ -967,8 +990,14 @@ function renderSlots() {
     el.innerHTML = `<input type="time" value="${s.start}" aria-label="开始时间"><span>至</span><input type="time" value="${s.end}" aria-label="结束时间"><button class="remove" title="删除时段">×</button>`;
     
     let inputs = el.querySelectorAll('input');
-    inputs[0].oninput = e => stopSlots[i].start = e.target.value;
-    inputs[1].oninput = e => stopSlots[i].end = e.target.value;
+    inputs[0].oninput = e => {
+      stopSlots[i].start = e.target.value;
+      updateSaveButtonState();
+    };
+    inputs[1].oninput = e => {
+      stopSlots[i].end = e.target.value;
+      updateSaveButtonState();
+    };
     
     let remove = el.querySelector('.remove');
     if (remove) {
@@ -979,6 +1008,7 @@ function renderSlots() {
     }
     container.appendChild(el);
   }
+  updateSaveButtonState();
 }
 
 function addSlot() {
@@ -993,13 +1023,24 @@ async function refresh() {
       fetch('/api/settings', {cache: 'no-store'}).then(x => x.json())
     ]);
     
-    if (!settingsLoaded) {
-      stopSlots = (s.daily_stop_windows || []).map(x => {
-        let [a, b] = x.split('-');
-        return {start: a, end: b};
-      });
-      renderSlots();
-      settingsLoaded = true;
+    if (s && s.daily_stop_windows) {
+      const windows = s.daily_stop_windows || [];
+      if (!settingsLoaded) {
+        savedWindowsJson = JSON.stringify(windows);
+        stopSlots = windows.map(x => {
+          let [a, b] = x.split('-');
+          return {start: a, end: b};
+        });
+        renderSlots();
+        settingsLoaded = true;
+      } else if (getCurrentWindowsJson() === savedWindowsJson) {
+        savedWindowsJson = JSON.stringify(windows);
+        stopSlots = windows.map(x => {
+          let [a, b] = x.split('-');
+          return {start: a, end: b};
+        });
+        renderSlots();
+      }
     }
     
     // Always sync power mode to ensure UI consistency if changed elsewhere
@@ -1083,6 +1124,9 @@ async function refresh() {
 }
 
 async function saveSettings() {
+  const saveBtn = $('save');
+  if (saveBtn && saveBtn.disabled) return;
+
   const windows = stopSlots.map(slot => `${slot.start}-${slot.end}`);
   const hint = $('saveHint');
   if (windows.some(window => window.startsWith('-') || window.endsWith('-') || window.slice(0, 5) === window.slice(6))) {
@@ -1090,7 +1134,10 @@ async function saveSettings() {
     hint.className = 'hint error';
     return;
   }
-  save.disabled = true;
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.style.cursor = 'wait';
+  }
   hint.textContent = '保存并执行中…';
   hint.className = 'hint';
   try {
@@ -1101,7 +1148,9 @@ async function saveSettings() {
     });
     const data = await response.json();
     if (!response.ok) throw Error(data.detail || '保存失败');
-    stopSlots = data.daily_stop_windows.map(window => {
+    const newWindows = data.daily_stop_windows || windows;
+    savedWindowsJson = JSON.stringify(newWindows);
+    stopSlots = newWindows.map(window => {
       const [start, end] = window.split('-');
       return {start, end};
     });
@@ -1120,7 +1169,8 @@ async function saveSettings() {
     hint.textContent = error.message;
     hint.className = 'hint error';
   } finally {
-    save.disabled = false;
+    if (saveBtn) saveBtn.style.cursor = '';
+    updateSaveButtonState();
   }
 }
 
