@@ -117,11 +117,11 @@ class CdtService:
         return None
 
     def _record_instance_state(self, client, instance_id, fallback_status=None, reason=None):
-        """Persist the latest ECS state and classify stop events.
+        """Persist the latest ECS state and classify scheduled stop events.
 
-        A scheduled stop is counted once when a daily stop window is entered.
-        An unexpected stop is counted only when ECS changes from a running state
-        to a stopped state outside of a stop action initiated by this service.
+        A scheduled stop is counted once when the instance leaves all configured
+        start windows. An unexpected stop is counted only when ECS changes from
+        a running state to a stopped state outside a service-initiated action.
         """
         now = int(time.time())
         instance = self._instance_info(client, instance_id)
@@ -142,9 +142,9 @@ class CdtService:
 
         previous_status = stats.get("last_status")
         was_scheduled_stop_active = bool(stats.get("scheduled_stop_active"))
-        is_scheduled_stop = reason == "scheduled_stop_window"
+        is_scheduled_stop = reason == "outside_start_schedule"
         service_initiated_stop = reason in {
-            "scheduled_stop_window",
+            "outside_start_schedule",
             "forced_off",
             "traffic_threshold_reached",
             "low_balance",
@@ -194,33 +194,47 @@ class CdtService:
         return "stop_requested"
 
     @staticmethod
-    def _within_stop_window(windows):
+    def _within_start_schedule(schedules):
         now = datetime.now()
         current = now.hour * 60 + now.minute
-        for window in windows:
-            start_text, end_text = window.split("-", 1)
-            start_h, start_m = map(int, start_text.strip().split(":"))
-            end_h, end_m = map(int, end_text.strip().split(":"))
-            start, end = start_h * 60 + start_m, end_h * 60 + end_m
-            if start == end:
-                raise ValueError(f"无效定时停机时间段: {window}")
-            if (start < end and start <= current < end) or (start > end and (current >= start or current < end)):
-                return True
+        current_weekday = now.weekday() + 1
+        for schedule in schedules:
+            selected = set(schedule["weekdays"])
+            for window in schedule["windows"]:
+                start_text, end_text = window.split("-", 1)
+                start_h, start_m = map(int, start_text.strip().split(":"))
+                end_h, end_m = map(int, end_text.strip().split(":"))
+                start, end = start_h * 60 + start_m, end_h * 60 + end_m
+                if start < end and start <= current < end and current_weekday in selected:
+                    return True
+                if start > end and current >= start and current_weekday in selected:
+                    return True
+                if start > end and current < end and ((now - timedelta(days=1)).weekday() + 1) in selected:
+                    return True
         return False
 
     @staticmethod
-    def next_stop_window_boundary(windows, now=None):
-        """Return the next daily stop-window boundary in local time."""
+    def next_start_schedule_boundary(schedules, now=None):
+        """Return the next selected start-schedule boundary in local time."""
         now = now or datetime.now()
+        if not schedules:
+            return None
         candidates = []
-        for window in windows:
-            start_text, end_text = window.split("-", 1)
-            for value in (start_text, end_text):
-                hour, minute = map(int, value.strip().split(":"))
-                candidate = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-                if candidate <= now:
-                    candidate += timedelta(days=1)
-                candidates.append(candidate)
+        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        for offset in range(-1, 10):
+            window_day = start_of_day + timedelta(days=offset)
+            for schedule in schedules:
+                if window_day.weekday() + 1 not in schedule["weekdays"]:
+                    continue
+                for window in schedule["windows"]:
+                    start_text, end_text = window.split("-", 1)
+                    start_hour, start_minute = map(int, start_text.strip().split(":"))
+                    end_hour, end_minute = map(int, end_text.strip().split(":"))
+                    start = window_day.replace(hour=start_hour, minute=start_minute)
+                    end_minutes = 1440 if end_text.strip() == "24:00" else end_hour * 60 + end_minute
+                    end_day = window_day + timedelta(days=1) if start > window_day.replace(hour=end_hour % 24, minute=end_minute) or end_minutes == 1440 else window_day
+                    end = end_day.replace(hour=0, minute=0) if end_minutes == 1440 else end_day.replace(hour=end_hour, minute=end_minute)
+                    candidates.extend(candidate for candidate in (start, end) if candidate > now)
         return min(candidates) if candidates else None
 
     def _save_status(self, result):
@@ -343,7 +357,7 @@ class CdtService:
                 if current_state in ("Running", "Starting") and startup and startup <= now
                 else None,
                 "scheduled_stop_active": (
-                    result.get("reason") == "scheduled_stop_window"
+                    result.get("reason") == "outside_start_schedule"
                     if result.get("reason")
                     else bool(stats.get("scheduled_stop_active"))
                 ),
@@ -359,16 +373,15 @@ class CdtService:
     def settings(self) -> dict:
         config = load_config()
         return {
-            "daily_stop_windows": config.get("daily_stop_windows", []),
+            "daily_start_schedules": config.get("daily_start_schedules", []),
             "power_mode": config.get("power_mode", "auto"),
         }
 
-    def update_settings(self, windows: list[str], power_mode: str) -> dict:
-        saved_windows, saved_power_mode = save_settings(windows, power_mode)
+    def update_settings(self, schedules: list[dict], power_mode: str) -> dict:
+        saved_schedules, saved_power_mode = save_settings(schedules, power_mode)
         return {
-            "daily_stop_windows": saved_windows,
+            "daily_start_schedules": saved_schedules,
             "power_mode": saved_power_mode,
-            "run_result": self.run_once(),
         }
 
     def run_once(self) -> dict:
@@ -428,18 +441,17 @@ class CdtService:
             result["action"] = self._stop(client, config["ecs_instance_id"])
             result["reason"] = "forced_off"
             result["ecs_status"] = "Stopped" if result["action"] == "already_stopped" else "Stopping"
-        elif self._within_stop_window(config["daily_stop_windows"]):
-            result["action"] = self._stop(client, config["ecs_instance_id"])
-            result["reason"] = "scheduled_stop_window"
-            result["ecs_status"] = "Stopped" if result["action"] == "already_stopped" else "Stopping"
         elif balance < config["balance_threshold_cny"]:
             result["action"] = {item["InstanceId"]: self._stop(client, item["InstanceId"]) for item in self._instances(client)}
             result["reason"] = "low_balance"
+        elif self._within_start_schedule(config["daily_start_schedules"]):
+            result["action"] = self._start(client, config["ecs_instance_id"])
+            result["reason"] = "scheduled_start_window"
+            result["ecs_status"] = "Running" if result["action"] == "already_running" else "Starting"
         else:
-            if traffic < config["traffic_threshold_gb"]:
-                result["action"] = self._start(client, config["ecs_instance_id"])
-                result["reason"] = "under_traffic_threshold"
-                result["ecs_status"] = "Running" if result["action"] == "already_running" else "Starting"
+            result["action"] = self._stop(client, config["ecs_instance_id"])
+            result["reason"] = "outside_start_schedule"
+            result["ecs_status"] = "Stopped" if result["action"] == "already_stopped" else "Stopping"
         result["ecs_status"], result["ecs_public_ip"] = self._record_instance_state(
             client,
             config["ecs_instance_id"],

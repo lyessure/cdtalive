@@ -77,24 +77,19 @@ func (s *Service) Settings() (map[string]any, error) {
 		return nil, err
 	}
 	return map[string]any{
-		"daily_stop_windows": cfg.DailyStopWindows,
-		"power_mode":         cfg.PowerMode,
+		"daily_start_schedules": cfg.DailyStartSchedules,
+		"power_mode":            cfg.PowerMode,
 	}, nil
 }
 
-func (s *Service) UpdateSettings(windows []string, powerMode string) (map[string]any, error) {
-	windows, powerMode, err := config.SaveSettings(windows, powerMode)
-	if err != nil {
-		return nil, err
-	}
-	result, err := s.RunOnce()
+func (s *Service) UpdateSettings(schedules []config.StartSchedule, powerMode string) (map[string]any, error) {
+	schedules, powerMode, err := config.SaveSettings(schedules, powerMode)
 	if err != nil {
 		return nil, err
 	}
 	return map[string]any{
-		"daily_stop_windows": windows,
-		"power_mode":         powerMode,
-		"run_result":         result,
+		"daily_start_schedules": schedules,
+		"power_mode":            powerMode,
 	}, nil
 }
 
@@ -186,18 +181,6 @@ func (s *Service) RunOnce() (map[string]any, error) {
 		} else {
 			result["ecs_status"] = "Stopping"
 		}
-	case withinStopWindow(cfg.DailyStopWindows, now):
-		action, err := s.stop(client, cfg.ECSInstanceID)
-		if err != nil {
-			return nil, err
-		}
-		result["action"] = action
-		result["reason"] = "scheduled_stop_window"
-		if action == "already_stopped" {
-			result["ecs_status"] = "Stopped"
-		} else {
-			result["ecs_status"] = "Stopping"
-		}
 	case balance < cfg.BalanceThreshold:
 		instances, err := client.Instances()
 		if err != nil {
@@ -213,17 +196,29 @@ func (s *Service) RunOnce() (map[string]any, error) {
 		}
 		result["action"] = actions
 		result["reason"] = "low_balance"
-	default:
+	case withinStartSchedule(cfg.DailyStartSchedules, now):
 		action, err := s.start(client, cfg.ECSInstanceID)
 		if err != nil {
 			return nil, err
 		}
 		result["action"] = action
-		result["reason"] = "under_traffic_threshold"
+		result["reason"] = "scheduled_start_window"
 		if action == "already_running" {
 			result["ecs_status"] = "Running"
 		} else {
 			result["ecs_status"] = "Starting"
+		}
+	default:
+		action, err := s.stop(client, cfg.ECSInstanceID)
+		if err != nil {
+			return nil, err
+		}
+		result["action"] = action
+		result["reason"] = "outside_start_schedule"
+		if action == "already_stopped" {
+			result["ecs_status"] = "Stopped"
+		} else {
+			result["ecs_status"] = "Stopping"
 		}
 	}
 
@@ -353,7 +348,7 @@ func (s *Service) Dashboard() (map[string]any, error) {
 		}
 		scheduledActive := state.ScheduledStopActive
 		if reason, ok := result["reason"].(string); ok && reason != "" {
-			scheduledActive = reason == "scheduled_stop_window"
+			scheduledActive = reason == "outside_start_schedule"
 		}
 		ecsStatus = map[string]any{
 			"state":                 currentState,
@@ -382,20 +377,38 @@ func (s *Service) Dashboard() (map[string]any, error) {
 	}, nil
 }
 
-func (s *Service) NextStopWindowBoundary(windows []string, now time.Time) (time.Time, bool, error) {
+func (s *Service) NextStartScheduleBoundary(schedules []config.StartSchedule, now time.Time) (time.Time, bool, error) {
+	normalizedSchedules, err := config.ValidateStartSchedules(schedules)
+	if err != nil {
+		return time.Time{}, false, err
+	}
+	if len(normalizedSchedules) == 0 {
+		return time.Time{}, false, nil
+	}
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, s.location)
 	var next time.Time
-	for _, window := range windows {
-		parts, err := windowMinutes(window)
-		if err != nil {
-			return time.Time{}, false, err
-		}
-		for _, minute := range parts {
-			candidate := time.Date(now.Year(), now.Month(), now.Day(), minute/60, minute%60, 0, 0, s.location)
-			if !candidate.After(now) {
-				candidate = candidate.AddDate(0, 0, 1)
+	for dayOffset := -1; dayOffset <= 8; dayOffset++ {
+		windowDay := startOfDay.AddDate(0, 0, dayOffset)
+		for _, schedule := range normalizedSchedules {
+			if !stopWeekdaySelected(schedule.Weekdays, windowDay.Weekday()) {
+				continue
 			}
-			if next.IsZero() || candidate.Before(next) {
-				next = candidate
+			for _, window := range schedule.Windows {
+				minutes, windowErr := startScheduleWindowMinutes(window)
+				if windowErr != nil {
+					return time.Time{}, false, windowErr
+				}
+				start := scheduleCandidate(windowDay, minutes[0], s.location)
+				endDay := windowDay
+				if minutes[0] > minutes[1] {
+					endDay = endDay.AddDate(0, 0, 1)
+				}
+				end := scheduleCandidate(endDay, minutes[1], s.location)
+				for _, candidate := range []time.Time{start, end} {
+					if candidate.After(now) && (next.IsZero() || candidate.Before(next)) {
+						next = candidate
+					}
+				}
 			}
 		}
 	}
@@ -424,8 +437,8 @@ func (s *Service) recordInstanceState(client cloud, instanceID, fallbackStatus, 
 	}
 	previousStatus := state.LastStatus
 	wasScheduled := state.ScheduledStopActive
-	isScheduled := reason == "scheduled_stop_window"
-	serviceInitiated := reason == "scheduled_stop_window" || reason == "forced_off" ||
+	isScheduled := reason == "outside_start_schedule"
+	serviceInitiated := reason == "outside_start_schedule" || reason == "forced_off" ||
 		reason == "traffic_threshold_reached" || reason == "low_balance"
 	scheduledEvent := isScheduled && !wasScheduled
 	unexpectedEvent := (status == "Stopped" || status == "Stopping") &&
@@ -479,32 +492,66 @@ func (s *Service) stop(client cloud, instanceID string) (string, error) {
 	return "stop_requested", nil
 }
 
-func withinStopWindow(windows []string, now time.Time) bool {
+func withinStartSchedule(schedules []config.StartSchedule, now time.Time) bool {
 	current := now.Hour()*60 + now.Minute()
-	for _, window := range windows {
-		minutes, err := windowMinutes(window)
-		if err != nil {
-			continue
+	for _, schedule := range schedules {
+		for _, window := range schedule.Windows {
+			minutes, err := startScheduleWindowMinutes(window)
+			if err != nil {
+				continue
+			}
+			start, end := minutes[0], minutes[1]
+			if start < end && start <= current && current < end && stopWeekdaySelected(schedule.Weekdays, now.Weekday()) {
+				return true
+			}
+			if start > end && current >= start && stopWeekdaySelected(schedule.Weekdays, now.Weekday()) {
+				return true
+			}
+			if start > end && current < end && stopWeekdaySelected(schedule.Weekdays, previousWeekday(now.Weekday())) {
+				return true
+			}
 		}
-		start, end := minutes[0], minutes[1]
-		if (start < end && start <= current && current < end) ||
-			(start > end && (current >= start || current < end)) {
+	}
+	return false
+}
+
+func stopWeekdaySelected(weekdays []int, weekday time.Weekday) bool {
+	value := int(weekday)
+	if value == 0 {
+		value = 7
+	}
+	for _, selected := range weekdays {
+		if selected == value {
 			return true
 		}
 	}
 	return false
 }
 
-func windowMinutes(window string) ([2]int, error) {
-	validated, err := config.ValidateStopWindows([]string{window})
+func previousWeekday(weekday time.Weekday) time.Weekday {
+	if weekday == time.Monday {
+		return time.Sunday
+	}
+	return weekday - 1
+}
+
+func startScheduleWindowMinutes(window string) ([2]int, error) {
+	validated, err := config.ValidateStartSchedules([]config.StartSchedule{{Weekdays: []int{1}, Windows: []string{window}}})
 	if err != nil {
 		return [2]int{}, err
 	}
 	var startHour, startMinute, endHour, endMinute int
-	if _, err := fmt.Sscanf(validated[0], "%d:%d-%d:%d", &startHour, &startMinute, &endHour, &endMinute); err != nil {
+	if _, err := fmt.Sscanf(validated[0].Windows[0], "%d:%d-%d:%d", &startHour, &startMinute, &endHour, &endMinute); err != nil {
 		return [2]int{}, err
 	}
 	return [2]int{startHour*60 + startMinute, endHour*60 + endMinute}, nil
+}
+
+func scheduleCandidate(day time.Time, minutes int, location *time.Location) time.Time {
+	if minutes == 1440 {
+		return time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, location).AddDate(0, 0, 1)
+	}
+	return time.Date(day.Year(), day.Month(), day.Day(), minutes/60, minutes%60, 0, 0, location)
 }
 
 func cloudStartTimestamp(instance *aliyun.Instance, fallback int64) int64 {

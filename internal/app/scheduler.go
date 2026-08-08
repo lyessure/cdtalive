@@ -11,12 +11,13 @@ import (
 type Scheduler struct {
 	service *Service
 	wake    chan struct{}
+	runNow  chan struct{}
 }
 
 const boundaryExecutionDelay = time.Second
 
 func NewScheduler(service *Service) *Scheduler {
-	return &Scheduler{service: service, wake: make(chan struct{}, 1)}
+	return &Scheduler{service: service, wake: make(chan struct{}, 1), runNow: make(chan struct{}, 1)}
 }
 
 func (s *Scheduler) Notify() {
@@ -26,9 +27,17 @@ func (s *Scheduler) Notify() {
 	}
 }
 
+func (s *Scheduler) RunImmediately() {
+	select {
+	case s.runNow <- struct{}{}:
+	default:
+	}
+}
+
 func (s *Scheduler) Run(ctx context.Context) {
 	var nextRegular time.Time
 	var nextBoundary time.Time
+	forceRun := false
 	for {
 		if !config.Exists() {
 			log.Print("配置文件不存在，跳过本次定时执行")
@@ -46,7 +55,7 @@ func (s *Scheduler) Run(ctx context.Context) {
 
 		now := time.Now().In(s.service.location)
 		boundaryDue := !nextBoundary.IsZero() && !now.Before(nextBoundary)
-		regularDue := nextRegular.IsZero() || !now.Before(nextRegular)
+		regularDue := forceRun || nextRegular.IsZero() || !now.Before(nextRegular)
 		runKind := ""
 		if regularDue && !s.service.IsTransitioning() {
 			runKind = "regular"
@@ -66,6 +75,7 @@ func (s *Scheduler) Run(ctx context.Context) {
 		}
 
 		if runKind == "regular" {
+			forceRun = false
 			interval := 300
 			if cfg, loadErr := config.Load(); loadErr == nil {
 				interval = cfg.RunIntervalSeconds
@@ -74,10 +84,10 @@ func (s *Scheduler) Run(ctx context.Context) {
 		}
 
 		if cfg, loadErr := config.Load(); loadErr != nil {
-			log.Printf("计算下一次定时停机边界失败: %v", loadErr)
+			log.Printf("计算下一次定时开机边界失败: %v", loadErr)
 			nextBoundary = time.Time{}
-		} else if boundary, exists, boundaryErr := s.service.NextStopWindowBoundary(cfg.DailyStopWindows, time.Now().In(s.service.location)); boundaryErr != nil {
-			log.Printf("计算下一次定时停机边界失败: %v", boundaryErr)
+		} else if boundary, exists, boundaryErr := s.service.NextStartScheduleBoundary(cfg.DailyStartSchedules, time.Now().In(s.service.location)); boundaryErr != nil {
+			log.Printf("计算下一次定时开机边界失败: %v", boundaryErr)
 			nextBoundary = time.Time{}
 		} else if exists {
 			nextBoundary = boundary.Add(boundaryExecutionDelay)
@@ -107,6 +117,11 @@ func (s *Scheduler) Run(ctx context.Context) {
 			if !timer.Stop() {
 				<-timer.C
 			}
+		case <-s.runNow:
+			if !timer.Stop() {
+				<-timer.C
+			}
+			forceRun = true
 		case <-timer.C:
 		}
 	}

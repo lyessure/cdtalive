@@ -67,7 +67,7 @@ func (s *Server) dashboard(c *gin.Context) {
 
 func (s *Server) settings(c *gin.Context) {
 	if !config.Exists() {
-		c.JSON(http.StatusOK, gin.H{"daily_stop_windows": []string{}, "power_mode": "auto"})
+		c.JSON(http.StatusOK, gin.H{"daily_start_schedules": []config.StartSchedule{}, "power_mode": "auto"})
 		return
 	}
 	result, err := s.service.Settings()
@@ -84,25 +84,35 @@ func (s *Server) saveSettings(c *gin.Context) {
 		return
 	}
 	var payload struct {
-		DailyStopWindows []string `json:"daily_stop_windows"`
-		PowerMode        string   `json:"power_mode"`
+		DailyStartSchedules *[]config.StartSchedule `json:"daily_start_schedules"`
+		PowerMode           string                  `json:"power_mode"`
 	}
 	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"detail": "daily_stop_windows 必须是字符串列表"})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"detail": "daily_start_schedules 必须是规则列表"})
 		return
 	}
-	if payload.DailyStopWindows == nil {
-		payload.DailyStopWindows = []string{}
+	if payload.DailyStartSchedules == nil {
+		settings, settingsErr := s.service.Settings()
+		if settingsErr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"detail": settingsErr.Error()})
+			return
+		}
+		if schedules, ok := settings["daily_start_schedules"].([]config.StartSchedule); ok {
+			payload.DailyStartSchedules = &schedules
+		} else {
+			empty := []config.StartSchedule{}
+			payload.DailyStartSchedules = &empty
+		}
 	}
 	if payload.PowerMode == "" {
 		payload.PowerMode = "auto"
 	}
-	result, err := s.service.UpdateSettings(payload.DailyStopWindows, payload.PowerMode)
+	result, err := s.service.UpdateSettings(*payload.DailyStartSchedules, payload.PowerMode)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"detail": err.Error()})
 		return
 	}
-	s.scheduler.Notify()
+	s.scheduler.RunImmediately()
 	c.JSON(http.StatusOK, result)
 }
 

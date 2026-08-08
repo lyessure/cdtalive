@@ -13,26 +13,30 @@ from .service import CdtService, TRANSITION_POLL_INTERVAL_SECONDS
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 service = CdtService()
 init_event = asyncio.Event()
+run_event = asyncio.Event()
 BOUNDARY_EXECUTION_DELAY_SECONDS = 1
 
 
 async def scheduler():
     next_regular_at = None
     next_boundary_at = None
+    run_requested = False
     while True:
         if not config_path().exists():
             logging.info("配置文件不存在，跳过本次定时执行")
             service.last_result = {"status": "未初始化", "error": "配置文件不存在"}
             await init_event.wait()
             init_event.clear()
+            run_event.clear()
             next_regular_at = None
             next_boundary_at = None
+            run_requested = False
             logging.info("检测到系统已初始化，立即启动定时检查程序")
             continue
 
         now = time.time()
         boundary_due = next_boundary_at is not None and now >= next_boundary_at
-        regular_due = next_regular_at is None or now >= next_regular_at
+        regular_due = run_requested or next_regular_at is None or now >= next_regular_at
         run_kind = None
         if regular_due and not service.is_ecs_transitioning():
             run_kind = "regular"
@@ -42,6 +46,7 @@ async def scheduler():
         try:
             if run_kind:
                 service.run_once()
+                run_requested = False
             elif service.is_ecs_transitioning():
                 service.refresh_ecs_status()
         except Exception as exc:
@@ -57,14 +62,14 @@ async def scheduler():
 
         try:
             config = load_config()
-            boundary = service.next_stop_window_boundary(config["daily_stop_windows"])
+            boundary = service.next_start_schedule_boundary(config["daily_start_schedules"])
             next_boundary_at = (
                 boundary.timestamp() + BOUNDARY_EXECUTION_DELAY_SECONDS
                 if boundary
                 else None
             )
         except Exception as exc:
-            logging.exception("计算下一次定时停机边界失败: %s", exc)
+            logging.exception("计算下一次定时开机边界失败: %s", exc)
             next_boundary_at = None
 
         now = time.time()
@@ -83,6 +88,9 @@ async def scheduler():
         try:
             await asyncio.wait_for(init_event.wait(), timeout=max(wake_at - now, 0))
             init_event.clear()
+            if run_event.is_set():
+                run_event.clear()
+                run_requested = True
         except asyncio.TimeoutError:
             pass
 
@@ -118,7 +126,7 @@ def dashboard():
 @app.get("/api/settings")
 def settings():
     if not config_path().exists():
-        return {"daily_stop_windows": [], "power_mode": "auto"}
+        return {"daily_start_schedules": [], "power_mode": "auto"}
     return service.settings()
 
 
@@ -126,16 +134,19 @@ def settings():
 async def save_settings(payload: dict = Body(...)):
     if not config_path().exists():
         raise HTTPException(status_code=400, detail="配置文件不存在，请先初始化配置。")
-    windows = payload.get("daily_stop_windows", [])
+    schedules = payload.get("daily_start_schedules")
     power_mode = payload.get("power_mode", "auto")
-    if not isinstance(windows, list) or not all(isinstance(item, str) for item in windows):
-        raise HTTPException(status_code=422, detail="daily_stop_windows 必须是字符串列表")
+    if schedules is None:
+        schedules = service.settings().get("daily_start_schedules", [])
+    if not isinstance(schedules, list):
+        raise HTTPException(status_code=422, detail="daily_start_schedules 必须是列表")
     if not isinstance(power_mode, str):
         raise HTTPException(status_code=422, detail="power_mode 必须是字符串")
     try:
-        result = service.update_settings(windows, power_mode)
+        result = service.update_settings(schedules, power_mode)
         # Recompute the next stop-window boundary immediately after settings change.
         init_event.set()
+        run_event.set()
         return result
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

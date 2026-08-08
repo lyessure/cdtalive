@@ -407,31 +407,106 @@ button:active {
   letter-spacing: 0.05em;
   color: var(--muted);
 }
+.overview-panel {
+  display: flex;
+  flex-direction: column;
+}
+.overview-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+}
+.overview-tag .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
 .facts {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
-.fact {
-  border-left: 1px solid var(--line);
-  padding-left: 16px;
+@media (max-width: 640px) {
+  .facts {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
-.fact:first-child {
-  border: 0;
-  padding-left: 0;
+@media (max-width: 400px) {
+  .facts {
+    grid-template-columns: repeat(1, 1fr);
+  }
 }
+.fact-card {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.fact-card:hover {
+  background: #ffffff;
+  border-color: rgba(2, 132, 199, 0.25);
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.05);
+}
+.fact-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.fact-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.fact-icon svg {
+  width: 12px;
+  height: 12px;
+}
+.fact-icon.blue { background: var(--blue-soft); color: var(--blue); }
+.fact-icon.green { background: var(--green-soft); color: var(--green); }
+.fact-icon.amber { background: var(--amber-soft); color: var(--amber); }
+.fact-icon.red { background: rgba(239, 68, 68, 0.08); color: var(--red); }
+.fact-icon.slate { background: rgba(100, 116, 139, 0.08); color: var(--muted); }
+
 .fact-label {
   color: var(--muted);
   font-size: 11px;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  white-space: nowrap;
 }
 .fact-value {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--ink);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+.fact-sub {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
 }
 .panel-header {
   display: flex;
@@ -560,77 +635,542 @@ button:active {
   gap: 8px;
   animation: fadeIn 0.2s ease;
 }
+.schedule-block {
+  margin-bottom: 16px;
+}
+.schedule-block:last-of-type {
+  margin-bottom: 0;
+}
+.schedule-block-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.schedule-block .setting-label {
+  margin-bottom: 3px;
+}
+.schedule-block .control-help {
+  margin-top: 0;
+}
+.weekday-picker {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+  transition: opacity 0.2s ease;
+}
+.weekday-btn {
+  height: 32px;
+  min-width: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #94a3b8;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.weekday-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+.weekday-btn.active {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #0284c7;
+  font-weight: 700;
+  box-shadow: none;
+}
+.weekday-btn.active:hover {
+  background: #e0f2fe;
+  border-color: #38bdf8;
+  color: #0369a1;
+}
+.weekday-picker.inactive {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.weekday-summary {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #64748b;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.weekday-summary.empty {
+  color: #d97706;
+  border-color: rgba(245, 158, 11, 0.25);
+  background: #fffbeb;
+}
+.time-section {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.schedule-summary {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.schedule-summary.muted {
+  color: var(--muted);
+  font-weight: 600;
+}
+.edit-schedule {
+  height: 34px;
+  padding: 0 12px;
+  gap: 6px;
+}
+.schedule-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+.schedule-overview:hover {
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+.schedule-overview-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.schedule-overview-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.schedule-overview-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0284c7;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.schedule-overview-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.schedule-overview-label {
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.schedule-day-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.schedule-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.schedule-status-badge .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.schedule-status-badge.active {
+  background: var(--green-soft);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.schedule-status-badge.active .status-dot {
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+  animation: pulse-dot 2s infinite;
+}
+.schedule-status-badge.paused {
+  background: var(--amber-soft);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.schedule-status-badge.unset {
+  background: #f1f5f9;
+  color: var(--muted);
+  border: 1px solid #e2e8f0;
+}
+@keyframes pulse-dot {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.schedule-slots-section {
+  padding-top: 10px;
+  border-top: 1px dashed rgba(15, 23, 42, 0.08);
+}
+.schedule-slots-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.schedule-rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+.schedule-rule {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.schedule-rule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.schedule-rule-title {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+.schedule-rule-meta {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.schedule-rule-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 10px;
+}
+.schedule-rule-days .weekday-btn {
+  height: 30px;
+  font-size: 11px;
+}
+.schedule-rule-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.schedule-rule-empty {
+  padding: 8px 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.schedule-rule-add {
+  margin-top: 8px;
+}
+.remove-rule {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94a3b8;
+  box-shadow: none;
+  font-size: 18px;
+}
+.remove-rule:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: var(--red);
+  transform: none;
+}
+.slot-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.15s ease;
+}
+.slot-pill svg {
+  width: 14px;
+  height: 14px;
+  color: #0284c7;
+  flex-shrink: 0;
+}
+.slot-pill.disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: var(--muted);
+  opacity: 0.75;
+}
+.slot-pill.disabled svg {
+  color: var(--muted);
+}
+.slot-empty {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  padding: 2px 0;
+}
+.modal-open {
+  overflow: hidden;
+}
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(5px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+.modal-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+}
+.schedule-modal {
+  width: min(480px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+  transform: translateY(10px) scale(0.98);
+  transition: transform 0.2s ease;
+}
+.modal-backdrop.open .schedule-modal {
+  transform: translateY(0) scale(1);
+}
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.modal-eyebrow {
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.modal-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+.modal-subtitle {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.modal-close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+  box-shadow: none;
+}
+.modal-close:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: var(--ink);
+  transform: none;
+}
+.modal-body {
+  padding: 16px 20px 4px;
+}
+.modal-body .schedule-block {
+  margin-bottom: 16px;
+}
+.modal-body .schedule-block:last-child {
+  margin-bottom: 0;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px 18px;
+}
+.modal-footer button {
+  min-width: 80px;
+  height: 32px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.modal-footer .secondary {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+.modal-footer .secondary:hover {
+  background: #f1f5f9;
+}
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .slots.inactive {
-  opacity: 0.75;
-  transition: opacity 0.2s ease;
+  opacity: 0.5;
+  pointer-events: none;
 }
 .slots {
   display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
 }
 .slot {
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--line);
-  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  background: #fafafa;
   border-radius: 8px;
-  padding: 4px 8px;
-  transition: border-color 0.2s;
+  padding: 4px 10px;
+  transition: all 0.15s ease;
+}
+.slot:hover {
+  border-color: #e2e8f0;
+  background: #ffffff;
 }
 .slot:focus-within {
-  border-color: #cbd5e1;
+  border-color: #38bdf8;
+  background: #ffffff;
 }
-.slot span {
-  color: var(--muted);
-  font-size: 12px;
+.slot-icon {
+  width: 13px;
+  height: 13px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+.slot span.slot-arrow {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 0 2px;
 }
 .slot input {
-  width: 90px;
-  height: 28px;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font: 13px 'JetBrains Mono', ui-monospace, monospace;
+  width: 92px;
+  height: 26px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 500;
   text-align: center;
+  transition: all 0.15s ease;
+}
+.slot input:hover {
+  border-color: #cbd5e1;
 }
 .slot input:focus {
   outline: none;
-}
-.remove, .add {
-  height: 28px;
-  padding: 0 10px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  color: var(--muted);
-  box-shadow: none;
-  border-radius: 6px;
-  transition: all 0.2s;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.1);
 }
 .remove {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
   font-size: 16px;
   line-height: 1;
-  padding: 0;
-  height: 28px;
-  width: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.15s ease;
 }
 .remove:hover {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: rgba(239, 68, 68, 0.18);
-  color: var(--red);
+  background: #fef2f2;
+  color: #ef4444;
 }
 .add {
-  height: 38px;
-  padding: 0 14px;
+  height: 26px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.add:hover {
+  background: #f0f9ff;
+  border-color: #0284c7;
+  color: #0284c7;
+}
+.add svg {
+  width: 12px;
+  height: 12px;
 }
 .hint {
   margin-top: 10px;
@@ -714,6 +1254,41 @@ button:active {
     width: auto;
   }
 
+  .weekday-picker {
+    gap: 6px;
+  }
+  .weekday-btn {
+    height: 42px;
+    font-size: 12px;
+  }
+  .schedule-block-header {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .schedule-panel-header {
+    align-items: flex-start;
+  }
+  .schedule-panel-actions {
+    width: auto;
+  }
+  .schedule-summary {
+    font-size: 15px;
+  }
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 10px;
+  }
+  .schedule-modal {
+    max-height: calc(100vh - 20px);
+    border-radius: 18px;
+  }
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
 }
 @media (min-width: 769px) and (max-width: 1024px) {
   .shell {
@@ -758,14 +1333,14 @@ button:active {
     
     <!-- 开关机模式分段控制 -->
     <div class="segmented-control" id="powerModeGroup">
-      <button type="button" class="segment-btn" data-value="on" title="手动开启 ECS 实例，忽略定时停机">
+      <button type="button" class="segment-btn" data-value="on" title="手动开启 ECS 实例，忽略定时开机规则">
         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
           <line x1="12" y1="2" x2="12" y2="12"></line>
         </svg>
         手动开机
       </button>
-      <button type="button" class="segment-btn" data-value="auto" title="基于流量与定时停机时段定时开关">
+      <button type="button" class="segment-btn" data-value="auto" title="基于流量与定时开机时段自动控制">
         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
@@ -821,37 +1396,114 @@ button:active {
   </section>
 
   <section class="bottom">
-    <article class="panel">
-      <div class="panel-title">运行概览</div>
-      <div class="facts">
-        <div class="fact">
-          <div class="fact-label">当前策略</div>
-          <div class="fact-value" id="reason">—</div>
+    <article class="panel overview-panel">
+      <div class="panel-header">
+        <div class="panel-title">运行概览</div>
+        <div class="overview-tag" id="overviewTag">
+          <span class="status-dot"></span>
+          <span id="overviewTagText">自动巡检中</span>
         </div>
-        <div class="fact">
-          <div class="fact-label">30 天定停 / 异常</div>
-          <div class="fact-value" id="stops">—</div>
+      </div>
+      <div class="facts">
+        <div class="fact-card">
+          <div class="fact-header">
+            <div class="fact-icon blue" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+            <div class="fact-label">当前策略</div>
+          </div>
+          <div class="fact-value" id="reason">—</div>
+          <div class="fact-sub" id="reasonSub">基于流量与时间调度</div>
+        </div>
+
+        <div class="fact-card">
+          <div class="fact-header">
+            <div class="fact-icon green" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+            </div>
+            <div class="fact-label">检测周期</div>
+          </div>
+          <div class="fact-value" id="checkInterval">300 秒/次</div>
+          <div class="fact-sub">后台自动定时轮询</div>
+        </div>
+
+        <div class="fact-card">
+          <div class="fact-header">
+            <div class="fact-icon amber" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="fact-label">上次检查</div>
+          </div>
+          <div class="fact-value" id="lastCheckTime">—</div>
+          <div class="fact-sub" id="lastCheckSub">结果：正常</div>
+        </div>
+
+        <div class="fact-card">
+          <div class="fact-header">
+            <div class="fact-icon blue" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+            </div>
+            <div class="fact-label">下次调度</div>
+          </div>
+          <div class="fact-value" id="nextCheckTime">—</div>
+          <div class="fact-sub" id="nextCheckSub">倒计时计算中</div>
+        </div>
+
+        <div class="fact-card">
+          <div class="fact-header">
+            <div class="fact-icon slate" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </div>
+            <div class="fact-label">30天计划关机</div>
+          </div>
+          <div class="fact-value" id="scheduledStops">—</div>
+          <div class="fact-sub">开机时段外自动停机</div>
+        </div>
+
+        <div class="fact-card">
+          <div class="fact-header">
+            <div class="fact-icon red" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <div class="fact-label">30天异常停止</div>
+          </div>
+          <div class="fact-value" id="unexpectedStops">—</div>
+          <div class="fact-sub" id="unexpectedSub">非服务主动停止</div>
         </div>
       </div>
     </article>
 
     <article class="panel">
-      <div class="panel-header">
-        <div class="panel-title">每日定时停机</div>
-        <div class="panel-actions">
-          <button class="add" title="添加时段" onclick="addSlot()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            添加时段
-          </button>
-          <button class="primary" id="save" title="保存设置" onclick="saveSettings()" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            保存设置
+      <div class="panel-header schedule-panel-header">
+        <div class="panel-title">每日定时开机</div>
+        <div class="panel-actions schedule-panel-actions">
+          <button class="primary edit-schedule" title="编辑开机计划" onclick="openStopScheduleModal()" aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path></svg>
+            编辑
           </button>
         </div>
       </div>
-      <div id="stopWindowNotice" class="warning-banner" style="display: none;"></div>
-      <div class="slots" id="slots"></div>
-      <div class="hint" id="saveHint"></div>
+      <div class="schedule-overview">
+        <div class="schedule-overview-top">
+          <div class="schedule-overview-title-group">
+            <div class="schedule-overview-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="m8 15 2 2 5-5"></path></svg>
+            </div>
+            <div>
+              <div class="schedule-overview-label">当前开机计划</div>
+              <div class="schedule-day-badge" id="scheduleDayBadge">正在读取…</div>
+            </div>
+          </div>
+          <div class="schedule-status-badge unset" id="scheduleStatusBadge">
+            <span class="status-dot"></span>读取中
+          </div>
+        </div>
+        <div class="schedule-slots-section">
+          <div class="schedule-slots-list" id="scheduleSlotsList">
+            <div class="slot-empty">正在加载开机时段…</div>
+          </div>
+        </div>
+      </div>
     </article>
   </section>
 
@@ -859,9 +1511,46 @@ button:active {
     <span id="last-collect-time">数据最新采集时间：正在加载…</span>
   </footer>
 </main>
+<div class="modal-backdrop" id="stopScheduleModal" aria-hidden="true">
+  <section class="schedule-modal" role="dialog" aria-modal="true" aria-labelledby="stopScheduleTitle">
+    <header class="modal-header">
+      <div>
+        <div class="modal-eyebrow">SCHEDULE SETTINGS</div>
+        <h2 class="modal-title" id="stopScheduleTitle">编辑定时开机</h2>
+        <div class="modal-subtitle">按星期分组设置开机时段，保存后立即生效</div>
+      </div>
+      <button type="button" class="modal-close" onclick="cancelStopScheduleModal()" aria-label="关闭">×</button>
+    </header>
+    <div class="modal-body">
+      <div id="stopWindowNotice" class="warning-banner" style="display: none;"></div>
+      <div class="schedule-block">
+        <div class="schedule-block-header">
+          <div>
+            <div class="setting-label">开机规则</div>
+            <div class="control-help">每组规则可独立设置星期和开机时段</div>
+          </div>
+          <button class="add" type="button" title="添加规则" onclick="addScheduleRule()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            添加规则
+          </button>
+        </div>
+        <div class="schedule-rule-list" id="scheduleRules"></div>
+      </div>
+      <div class="hint" id="saveHint"></div>
+    </div>
+    <footer class="modal-footer">
+      <button type="button" class="secondary" onclick="cancelStopScheduleModal()">取消</button>
+      <button type="button" class="primary" id="saveSchedule" title="保存设置" onclick="saveSettings()" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        保存设置
+      </button>
+    </footer>
+  </section>
+</div>
 <script>
 const $ = id => document.getElementById(id);
 const num = (v, d = 2) => v === null || v === undefined ? '—' : Number(v).toFixed(d);
+const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[character]));
 const formatRuntime = seconds => {
   const totalMinutes = Math.floor(Number(seconds) / 60);
   const days = Math.floor(totalMinutes / 1440);
@@ -872,29 +1561,128 @@ const formatRuntime = seconds => {
   return `${minutes} 分钟`;
 };
 const time = t => t ? new Date(t * 1000).toLocaleString('zh-CN', {hour12: false}) : '暂无';
+const timeOfDay = t => t ? new Date(t * 1000).toLocaleTimeString('zh-CN', {hour12: false}) : '—';
+const timeAgo = t => {
+  if (!t) return '';
+  const diff = Math.max(0, Math.floor(Date.now() / 1000 - t));
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+  if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+  return Math.floor(diff / 86400) + '天前';
+};
 const reasonMap = {
-  scheduled_stop_window: '定时停机窗口',
-  under_traffic_threshold: '流量充足',
+  scheduled_start_window: '定时开机时段',
+  outside_start_schedule: '开机时段外',
   traffic_threshold_reached: '流量已达上限',
   low_balance: '余额不足',
   forced_on: '手动开机',
   forced_off: '手动关机'
 };
+const reasonSubMap = {
+  scheduled_start_window: '开机窗口内正常运行',
+  outside_start_schedule: '开机时段外自动停止',
+  traffic_threshold_reached: '配额触发，已强制停机',
+  low_balance: '余额低于阈值，已停机',
+  forced_on: '手动模式：强制开机',
+  forced_off: '手动模式：强制关机'
+};
+const weekdayOptions = [
+  {value: 1, label: '周一'},
+  {value: 2, label: '周二'},
+  {value: 3, label: '周三'},
+  {value: 4, label: '周四'},
+  {value: 5, label: '周五'},
+  {value: 6, label: '周六'},
+  {value: 7, label: '周日'},
+];
 
-let stopSlots = [];
-let savedWindowsJson = '[]';
+let startSchedules = [];
+let savedSchedulesJson = '[]';
 let settingsLoaded = false;
 let nextCheckAt = 0;
 let countdownSyncing = false;
 let currentPowerMode = 'auto';
+let scheduleDraft = null;
 
-function getCurrentWindowsJson() {
-  return JSON.stringify(stopSlots.map(s => `${s.start}-${s.end}`));
+function normalizeWeekdays(values) {
+  if (!Array.isArray(values)) return [];
+  return [...new Set(values.map(Number).filter(value => value >= 1 && value <= 7))].sort((a, b) => a - b);
+}
+
+function normalizeSchedules(values) {
+  if (!Array.isArray(values)) return [];
+  return values.filter(rule => rule && typeof rule === 'object').map(rule => ({
+    weekdays: normalizeWeekdays(rule.weekdays),
+    windows: Array.isArray(rule.windows) ? rule.windows.map(window => {
+      if (window && typeof window === 'object') {
+        return {start: String(window.start ?? '').trim(), end: String(window.end ?? '').trim()};
+      }
+      const [start = '', end = ''] = String(window).split('-', 2);
+      return {start: start.trim(), end: end.trim()};
+    }) : [],
+  }));
+}
+
+function cloneSchedules(values) {
+  return normalizeSchedules(values).map(rule => ({
+    weekdays: [...rule.weekdays],
+    windows: rule.windows.map(slot => ({...slot})),
+  }));
+}
+
+function schedulesJson(values = startSchedules) {
+  return JSON.stringify(values.map(rule => ({
+    weekdays: [...rule.weekdays].sort((a, b) => a - b),
+    windows: rule.windows.map(slot => `${slot.start}-${slot.end}`),
+  })));
+}
+
+function selectedWeekdayText(weekdays) {
+  const selected = new Set(weekdays);
+  const labels = weekdayOptions.filter(day => selected.has(day.value)).map(day => day.label);
+  if (labels.length === 7) return '每天';
+  if (labels.length === 5 && weekdays.every(value => value >= 1 && value <= 5)) return '每工作日';
+  return labels.length ? labels.join('、') : '未选择日期';
+}
+
+function renderScheduleSummary() {
+  const dayBadge = $('scheduleDayBadge');
+  const statusBadge = $('scheduleStatusBadge');
+  const slotsList = $('scheduleSlotsList');
+  if (!dayBadge || !statusBadge || !slotsList) return;
+
+  const isAuto = currentPowerMode === 'auto';
+  const validRules = startSchedules.filter(rule => rule.weekdays.length && rule.windows.some(slot => slot.start && slot.end));
+  dayBadge.textContent = validRules.length
+    ? validRules.map(rule => selectedWeekdayText(rule.weekdays)).join(' / ')
+    : '未设置开机规则';
+
+  if (!isAuto) {
+    statusBadge.className = 'schedule-status-badge paused';
+    statusBadge.innerHTML = '<span class="status-dot"></span>已暂停 (手动模式)';
+  } else if (validRules.length === 0) {
+    statusBadge.className = 'schedule-status-badge unset';
+    statusBadge.innerHTML = '<span class="status-dot"></span>未配置开机时段';
+  } else {
+    statusBadge.className = 'schedule-status-badge active';
+    statusBadge.innerHTML = '<span class="status-dot"></span>定时生效中';
+  }
+
+  if (validRules.length === 0) {
+    slotsList.innerHTML = '<div class="slot-empty">未设置每日开机时间段</div>';
+  } else {
+    slotsList.innerHTML = validRules.flatMap(rule => rule.windows.filter(slot => slot.start && slot.end).map(slot => `
+      <div class="slot-pill ${!isAuto ? 'disabled' : ''}" title="${isAuto ? '定时开机时间段' : '当前手动模式下暂不自动开机'}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <span>${escapeHtml(slot.start)} – ${escapeHtml(slot.end)}</span>
+      </div>
+    `)).join('');
+  }
 }
 
 function updateSaveButtonState() {
-  const isModified = getCurrentWindowsJson() !== savedWindowsJson;
-  const saveBtn = $('save');
+  const isModified = schedulesJson() !== savedSchedulesJson;
+  const saveBtn = $('saveSchedule');
   if (saveBtn) {
     saveBtn.disabled = !isModified;
   }
@@ -909,20 +1697,18 @@ function setPowerModeActive(val) {
       btn.classList.remove('active');
     }
   });
-  
+
   const isAuto = val === 'auto';
   const notice = $('stopWindowNotice');
-  const slotsEl = $('slots');
-  if (notice && slotsEl) {
+  if (notice) {
     if (isAuto) {
       notice.style.display = 'none';
-      slotsEl.classList.remove('inactive');
     } else {
       notice.style.display = 'flex';
-      notice.textContent = `当前处于手动模式（${val === 'on' ? '手动开机' : '手动关机'}），定时停机时段暂不生效`;
-      slotsEl.classList.add('inactive');
+      notice.textContent = `当前处于手动模式（${val === 'on' ? '手动开机' : '手动关机'}），开机规则暂不生效`;
     }
   }
+  renderScheduleSummary();
 }
 
 function renderCountdown() {
@@ -932,15 +1718,23 @@ function renderCountdown() {
   let secs = remaining % 60;
   const icon = document.querySelector('.updated-icon');
   const txt = $('countdown-text');
-  if (!txt) return;
+
+  const nextTimeEl = $('nextCheckTime');
+  const nextSubEl = $('nextCheckSub');
+  if (nextTimeEl && nextCheckAt) {
+    nextTimeEl.textContent = timeOfDay(Math.floor(nextCheckAt / 1000));
+  }
   
   if (remaining) {
     if (icon) icon.classList.remove('syncing');
-    txt.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    const timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    if (txt) txt.textContent = timeStr;
+    if (nextSubEl) nextSubEl.textContent = '倒计时 ' + timeStr;
     return;
   }
   if (icon) icon.classList.add('syncing');
-  txt.textContent = '即将执行';
+  if (txt) txt.textContent = '即将执行';
+  if (nextSubEl) nextSubEl.textContent = '即将执行...';
   if (!countdownSyncing) {
     countdownSyncing = true;
     setTimeout(async () => {
@@ -948,6 +1742,85 @@ function renderCountdown() {
       countdownSyncing = false;
     }, 1000);
   }
+}
+
+function renderScheduleRules() {
+  const container = $('scheduleRules');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!startSchedules.length) {
+    container.innerHTML = '<div class="schedule-rule-empty">还没有开机规则，点击“添加规则”开始设置。</div>';
+    updateSaveButtonState();
+    renderScheduleSummary();
+    return;
+  }
+  startSchedules.forEach((rule, ruleIndex) => {
+    const card = document.createElement('div');
+    card.className = 'schedule-rule';
+    const dayText = selectedWeekdayText(rule.weekdays);
+    card.innerHTML = `
+      <div class="schedule-rule-header">
+        <div><div class="schedule-rule-title">规则 ${ruleIndex + 1}</div><div class="schedule-rule-meta">${dayText}</div></div>
+        <button type="button" class="remove-rule" title="删除规则" aria-label="删除规则">×</button>
+      </div>
+      <div class="schedule-rule-days" role="group" aria-label="选择规则生效星期"></div>
+      <div class="schedule-rule-slots"></div>
+      <button type="button" class="add schedule-rule-add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        添加开机时段
+      </button>`;
+
+    const days = card.querySelector('.schedule-rule-days');
+    weekdayOptions.forEach(day => {
+      const selected = rule.weekdays.includes(day.value);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'weekday-btn' + (selected ? ' active' : '');
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      button.textContent = day.label;
+      button.onclick = () => {
+        rule.weekdays = selected
+          ? rule.weekdays.filter(value => value !== day.value)
+          : [...rule.weekdays, day.value].sort((a, b) => a - b);
+        renderScheduleRules();
+      };
+      days.appendChild(button);
+    });
+
+    const slots = card.querySelector('.schedule-rule-slots');
+    if (!rule.windows.length) {
+      slots.innerHTML = '<div class="schedule-rule-empty">未添加开机时段</div>';
+    }
+    rule.windows.forEach((slot, slotIndex) => {
+      const row = document.createElement('div');
+      row.className = 'slot';
+      row.innerHTML = `<svg class="slot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><input type="text" inputmode="numeric" placeholder="09:00" value="${escapeHtml(slot.start)}" aria-label="开机开始时间"><span class="slot-arrow">至</span><input type="text" inputmode="numeric" placeholder="18:00" value="${escapeHtml(slot.end)}" aria-label="开机结束时间"><button class="remove" title="删除时段" type="button">×</button>`;
+      const inputs = row.querySelectorAll('input');
+      inputs[0].oninput = event => { slot.start = event.target.value.trim(); updateSaveButtonState(); renderScheduleSummary(); };
+      inputs[1].oninput = event => { slot.end = event.target.value.trim(); updateSaveButtonState(); renderScheduleSummary(); };
+      row.querySelector('.remove').onclick = () => {
+        rule.windows.splice(slotIndex, 1);
+        renderScheduleRules();
+      };
+      slots.appendChild(row);
+    });
+    card.querySelector('.remove-rule').onclick = () => {
+      startSchedules.splice(ruleIndex, 1);
+      renderScheduleRules();
+    };
+    card.querySelector('.schedule-rule-add').onclick = () => {
+      rule.windows.push({start: '09:00', end: '18:00'});
+      renderScheduleRules();
+    };
+    container.appendChild(card);
+  });
+  updateSaveButtonState();
+  renderScheduleSummary();
+}
+
+function addScheduleRule() {
+  startSchedules.push({weekdays: [1, 2, 3, 4, 5], windows: [{start: '09:00', end: '18:00'}]});
+  renderScheduleRules();
 }
 
 async function refreshFromCountdown() {
@@ -971,49 +1844,34 @@ async function refreshFromCountdown() {
   }
 }
 
-function renderSlots() {
-  const container = $('slots');
-  container.innerHTML = '';
-  if (!stopSlots.length) {
-    let emptyHint = document.createElement('div');
-    emptyHint.className = 'empty-slots-hint';
-    emptyHint.style.cssText = 'color: var(--muted); font-size: 13px; padding: 4px 0;';
-    emptyHint.textContent = '暂无停机时段';
-    container.appendChild(emptyHint);
-    updateSaveButtonState();
-    return;
-  }
-  for (let i = 0; i < stopSlots.length; i++) {
-    let s = stopSlots[i];
-    let el = document.createElement('div');
-    el.className = 'slot';
-    el.innerHTML = `<input type="time" value="${s.start}" aria-label="开始时间"><span>至</span><input type="time" value="${s.end}" aria-label="结束时间"><button class="remove" title="删除时段">×</button>`;
-    
-    let inputs = el.querySelectorAll('input');
-    inputs[0].oninput = e => {
-      stopSlots[i].start = e.target.value;
-      updateSaveButtonState();
-    };
-    inputs[1].oninput = e => {
-      stopSlots[i].end = e.target.value;
-      updateSaveButtonState();
-    };
-    
-    let remove = el.querySelector('.remove');
-    if (remove) {
-      remove.onclick = () => {
-        stopSlots.splice(i, 1);
-        renderSlots();
-      };
-    }
-    container.appendChild(el);
-  }
-  updateSaveButtonState();
+function openStopScheduleModal() {
+  const modal = $('stopScheduleModal');
+  if (!modal) return;
+  scheduleDraft = cloneSchedules(startSchedules);
+  renderScheduleRules();
+  setPowerModeActive(currentPowerMode);
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  modal.querySelector('.modal-close')?.focus();
 }
 
-function addSlot() {
-  stopSlots.push({start: '00:00', end: '00:00'});
-  renderSlots();
+function closeStopScheduleModal() {
+  const modal = $('stopScheduleModal');
+  if (!modal) return;
+  scheduleDraft = null;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+}
+
+function cancelStopScheduleModal() {
+  if (scheduleDraft) {
+    startSchedules = cloneSchedules(scheduleDraft);
+    renderScheduleRules();
+    updateSaveButtonState();
+  }
+  closeStopScheduleModal();
 }
 
 async function refresh() {
@@ -1023,23 +1881,17 @@ async function refresh() {
       fetch('/api/settings', {cache: 'no-store'}).then(x => x.json())
     ]);
     
-    if (s && s.daily_stop_windows) {
-      const windows = s.daily_stop_windows || [];
+    if (s) {
+      const schedules = normalizeSchedules(s.daily_start_schedules);
       if (!settingsLoaded) {
-        savedWindowsJson = JSON.stringify(windows);
-        stopSlots = windows.map(x => {
-          let [a, b] = x.split('-');
-          return {start: a, end: b};
-        });
-        renderSlots();
+        startSchedules = cloneSchedules(schedules);
+        savedSchedulesJson = schedulesJson(startSchedules);
+        renderScheduleRules();
         settingsLoaded = true;
-      } else if (getCurrentWindowsJson() === savedWindowsJson) {
-        savedWindowsJson = JSON.stringify(windows);
-        stopSlots = windows.map(x => {
-          let [a, b] = x.split('-');
-          return {start: a, end: b};
-        });
-        renderSlots();
+      } else if (schedulesJson() === savedSchedulesJson) {
+        startSchedules = cloneSchedules(schedules);
+        savedSchedulesJson = schedulesJson(startSchedules);
+        renderScheduleRules();
       }
     }
     
@@ -1051,7 +1903,7 @@ async function refresh() {
     let r = d.last_run || {};
     let b = d.balance || {};
     let e = d.ecs || {};
-    let scheduled = r.reason === 'scheduled_stop_window';
+    let scheduled = r.reason === 'outside_start_schedule';
     let stateMap = {Running: '运行中', Stopped: '已停止', Starting: '启动中', Stopping: '停止中'};
     let rawState = e.state || ({already_stopped: 'Stopped', already_running: 'Running'}[r.action]);
     let used = r.traffic_gb;
@@ -1063,8 +1915,8 @@ async function refresh() {
     
     if (scheduled) {
       dot.className = 'dot warn';
-      stateTitle.textContent = '定时停机中';
-      stateText.textContent = '当前处于设定的每日停机时段';
+      stateTitle.textContent = '开机时段外';
+      stateText.textContent = '当前处于设定的每日开机时段之外';
     } else if (r.reason === 'forced_off') {
       dot.className = 'dot warn';
       stateTitle.textContent = '已手动关机';
@@ -1103,7 +1955,7 @@ async function refresh() {
     trafficRing.style.strokeDasharray = percent === null ? '0 157.08' : `${percent * 1.5708} 157.08`;
     ecs.textContent = stateMap[rawState] || '暂无';
     ecsDot.className = 'ecs-dot ' + (rawState === 'Running' ? 'ok' : rawState === 'Stopped' ? 'bad' : 'pending');
-    let ecsStatusText = scheduled ? '计划停机状态' :
+    let ecsStatusText = scheduled ? '开机时段外的计划停机状态' :
       (rawState === 'Starting' || rawState === 'Stopping'
         ? '状态切换中，每 15 秒检查一次'
         : '来自最近一次状态检查');
@@ -1116,7 +1968,31 @@ async function refresh() {
       : (e.running_seconds === null || e.running_seconds === undefined ? '-' : formatRuntime(e.running_seconds));
     runtimeSub.textContent = stopped ? '' : '连续运行时长';
     reason.textContent = reasonMap[r.reason] || '暂无';
-    stops.textContent = (e.scheduled_stops_30d ?? '—') + ' / ' + (e.unexpected_stops_30d ?? '—') + ' 次';
+    if ($('reasonSub')) {
+      $('reasonSub').textContent = reasonSubMap[r.reason] || '基于流量与时间调度';
+    }
+    if ($('checkInterval')) {
+      const interval = d.run_interval_seconds || 300;
+      $('checkInterval').textContent = interval + ' 秒/次';
+    }
+    if ($('lastCheckTime')) {
+      $('lastCheckTime').textContent = r.timestamp ? timeOfDay(r.timestamp) : '—';
+    }
+    if ($('lastCheckSub')) {
+      const ago = r.timestamp ? timeAgo(r.timestamp) : '';
+      const statusStr = r.status || '完成';
+      $('lastCheckSub').textContent = ago ? `${ago} · 状态 ${statusStr}` : `状态 ${statusStr}`;
+    }
+    if ($('scheduledStops')) {
+      $('scheduledStops').textContent = (e.scheduled_stops_30d !== undefined && e.scheduled_stops_30d !== null) ? e.scheduled_stops_30d + ' 次' : '—';
+    }
+    if ($('unexpectedStops')) {
+      const unexCount = e.unexpected_stops_30d ?? 0;
+      $('unexpectedStops').textContent = (e.unexpected_stops_30d !== undefined && e.unexpected_stops_30d !== null) ? unexCount + ' 次' : '—';
+      if ($('unexpectedSub')) {
+        $('unexpectedSub').textContent = unexCount > 0 ? '近30天有关机记录' : '无异常关机记录';
+      }
+    }
   } catch (e) {
     stateTitle.textContent = '暂时无法获取数据';
     stateText.textContent = '请检查容器服务';
@@ -1124,13 +2000,16 @@ async function refresh() {
 }
 
 async function saveSettings() {
-  const saveBtn = $('save');
+  const saveBtn = $('saveSchedule');
   if (saveBtn && saveBtn.disabled) return;
 
-  const windows = stopSlots.map(slot => `${slot.start}-${slot.end}`);
   const hint = $('saveHint');
-  if (windows.some(window => window.startsWith('-') || window.endsWith('-') || window.slice(0, 5) === window.slice(6))) {
-    hint.textContent = '请为每个时段选择不同的开始和结束时间';
+  const invalid = startSchedules.some(rule => !rule.weekdays.length || !rule.windows.length || rule.windows.some(slot => {
+    const valid = value => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value) || value === '24:00';
+    return !valid(slot.start) || !valid(slot.end) || slot.start === slot.end || slot.start === '24:00';
+  }));
+  if (invalid) {
+    hint.textContent = '请为每组规则选择星期，并填写有效且不同的开机时间（结束时间可填 24:00）';
     hint.className = 'hint error';
     return;
   }
@@ -1138,29 +2017,26 @@ async function saveSettings() {
     saveBtn.disabled = true;
     saveBtn.style.cursor = 'wait';
   }
-  hint.textContent = '保存并执行中…';
+  hint.textContent = '正在保存…';
   hint.className = 'hint';
   try {
     const response = await fetch('/api/settings', {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({daily_stop_windows: windows, power_mode: currentPowerMode}),
+      body: JSON.stringify({daily_start_schedules: startSchedules.map(rule => ({weekdays: rule.weekdays, windows: rule.windows.map(slot => `${slot.start}-${slot.end}`)})), power_mode: currentPowerMode}),
     });
     const data = await response.json();
     if (!response.ok) throw Error(data.detail || '保存失败');
-    const newWindows = data.daily_stop_windows || windows;
-    savedWindowsJson = JSON.stringify(newWindows);
-    stopSlots = newWindows.map(window => {
-      const [start, end] = window.split('-');
-      return {start, end};
-    });
+    startSchedules = cloneSchedules(data.daily_start_schedules ?? startSchedules);
+    savedSchedulesJson = schedulesJson(startSchedules);
     setPowerModeActive(data.power_mode);
-    renderSlots();
+    renderScheduleRules();
     await refresh();
-    hint.textContent = '设置已保存并立即执行。';
+    hint.textContent = '设置已保存，后台检查已触发。';
     hint.className = 'hint ok';
+    closeStopScheduleModal();
     setTimeout(() => {
-      if (hint.textContent === '设置已保存并立即执行。') {
+      if (hint.textContent === '设置已保存，后台检查已触发。') {
         hint.textContent = '';
         hint.className = 'hint';
       }
@@ -1188,20 +2064,23 @@ document.querySelectorAll('.segment-btn').forEach(btn => {
     hint.className = 'hint';
     
     try {
-      const windows = stopSlots.map(s => `${s.start}-${s.end}`);
       const response = await fetch('/api/settings', {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({daily_stop_windows: windows, power_mode: val})
+        body: JSON.stringify({daily_start_schedules: startSchedules.map(rule => ({weekdays: rule.weekdays, windows: rule.windows.map(slot => `${slot.start}-${slot.end}`)})), power_mode: val})
       });
       const data = await response.json();
       if (!response.ok) throw Error(data.detail || '保存失败');
+
+      startSchedules = cloneSchedules(data.daily_start_schedules ?? startSchedules);
+      savedSchedulesJson = schedulesJson(startSchedules);
+      renderScheduleRules();
       
       await refresh();
-      hint.textContent = '模式已成功切换并执行。';
+      hint.textContent = '模式已切换，后台检查已触发。';
       hint.className = 'hint ok';
       setTimeout(() => {
-        if (hint.textContent === '模式已成功切换并执行。') {
+        if (hint.textContent === '模式已切换，后台检查已触发。') {
           hint.textContent = '';
           hint.className = 'hint';
         }
@@ -1227,6 +2106,16 @@ countdownButton.addEventListener('keydown', event => {
   }
 });
 
+$('stopScheduleModal')?.addEventListener('click', event => {
+  if (event.target === event.currentTarget) cancelStopScheduleModal();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && $('stopScheduleModal')?.classList.contains('open')) {
+    cancelStopScheduleModal();
+  }
+});
+
+renderScheduleRules();
 refresh();
 setInterval(renderCountdown, 1000);
 setInterval(refresh, 30000);
