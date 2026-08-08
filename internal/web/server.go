@@ -54,6 +54,7 @@ func (s *Server) dashboard(c *gin.Context) {
 			"ecs":                  nil,
 			"run_interval_seconds": 300,
 			"next_run_at":          nil,
+			"next_start_at":        nil,
 		})
 		return
 	}

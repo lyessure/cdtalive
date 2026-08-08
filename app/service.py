@@ -237,6 +237,27 @@ class CdtService:
                     candidates.extend(candidate for candidate in (start, end) if candidate > now)
         return min(candidates) if candidates else None
 
+    @staticmethod
+    def next_start_schedule_time(schedules, now=None):
+        """Return the next selected start time in local time."""
+        now = now or datetime.now()
+        if not schedules:
+            return None
+        candidates = []
+        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        for offset in range(0, 9):
+            window_day = start_of_day + timedelta(days=offset)
+            for schedule in schedules:
+                if window_day.weekday() + 1 not in schedule["weekdays"]:
+                    continue
+                for window in schedule["windows"]:
+                    start_text = window.split("-", 1)[0].strip()
+                    start_hour, start_minute = map(int, start_text.split(":"))
+                    start = window_day.replace(hour=start_hour, minute=start_minute)
+                    if start > now:
+                        candidates.append(start)
+        return min(candidates) if candidates else None
+
     def _save_status(self, result):
         data_dir().mkdir(parents=True, exist_ok=True)
         self.status_file.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -362,12 +383,15 @@ class CdtService:
                     else bool(stats.get("scheduled_stop_active"))
                 ),
             }
+        dashboard_config = load_config()
+        next_start = self.next_start_schedule_time(dashboard_config.get("daily_start_schedules", []))
         return {
             "last_run": result,
             "balance": balance,
             "ecs": status,
-            "run_interval_seconds": load_config().get("run_interval_seconds", 300),
+            "run_interval_seconds": dashboard_config.get("run_interval_seconds", 300),
             "next_run_at": self.next_run_at,
+            "next_start_at": next_start.timestamp() if next_start else None,
         }
 
     def settings(self) -> dict:

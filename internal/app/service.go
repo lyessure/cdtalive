@@ -365,6 +365,14 @@ func (s *Service) Dashboard() (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+	nextStartAt, nextStartExists, err := s.NextStartScheduleTime(cfg.DailyStartSchedules, time.Now().In(s.location))
+	if err != nil {
+		return nil, err
+	}
+	var nextStartTimestamp int64
+	if nextStartExists {
+		nextStartTimestamp = nextStartAt.Unix()
+	}
 	s.stateMu.RLock()
 	nextRunAt := s.nextRunAt
 	s.stateMu.RUnlock()
@@ -374,6 +382,7 @@ func (s *Service) Dashboard() (map[string]any, error) {
 		"ecs":                  ecsStatus,
 		"run_interval_seconds": cfg.RunIntervalSeconds,
 		"next_run_at":          nullableTimestamp(nextRunAt),
+		"next_start_at":        nullableTimestamp(nextStartTimestamp),
 	}, nil
 }
 
@@ -408,6 +417,37 @@ func (s *Service) NextStartScheduleBoundary(schedules []config.StartSchedule, no
 					if candidate.After(now) && (next.IsZero() || candidate.Before(next)) {
 						next = candidate
 					}
+				}
+			}
+		}
+	}
+	return next, !next.IsZero(), nil
+}
+
+func (s *Service) NextStartScheduleTime(schedules []config.StartSchedule, now time.Time) (time.Time, bool, error) {
+	normalizedSchedules, err := config.ValidateStartSchedules(schedules)
+	if err != nil {
+		return time.Time{}, false, err
+	}
+	if len(normalizedSchedules) == 0 {
+		return time.Time{}, false, nil
+	}
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, s.location)
+	var next time.Time
+	for dayOffset := 0; dayOffset <= 8; dayOffset++ {
+		windowDay := startOfDay.AddDate(0, 0, dayOffset)
+		for _, schedule := range normalizedSchedules {
+			if !stopWeekdaySelected(schedule.Weekdays, windowDay.Weekday()) {
+				continue
+			}
+			for _, window := range schedule.Windows {
+				minutes, windowErr := startScheduleWindowMinutes(window)
+				if windowErr != nil {
+					return time.Time{}, false, windowErr
+				}
+				start := scheduleCandidate(windowDay, minutes[0], s.location)
+				if start.After(now) && (next.IsZero() || start.Before(next)) {
+					next = start
 				}
 			}
 		}

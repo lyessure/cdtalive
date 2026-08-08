@@ -1432,10 +1432,10 @@ button:active {
             <div class="fact-icon amber" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
             </div>
-            <div class="fact-label">上次检查</div>
+            <div class="fact-label">下次开机时间</div>
           </div>
-          <div class="fact-value" id="lastCheckTime">—</div>
-          <div class="fact-sub" id="lastCheckSub">结果：正常</div>
+          <div class="fact-value" id="nextStartTime">—</div>
+          <div class="fact-sub" id="nextStartSub">按开机计划计算</div>
         </div>
 
         <div class="fact-card">
@@ -1562,6 +1562,7 @@ const formatRuntime = seconds => {
 };
 const time = t => t ? new Date(t * 1000).toLocaleString('zh-CN', {hour12: false}) : '暂无';
 const timeOfDay = t => t ? new Date(t * 1000).toLocaleTimeString('zh-CN', {hour12: false}) : '—';
+const scheduleTime = t => t ? new Date(t * 1000).toLocaleString('zh-CN', {month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false}) : '—';
 const timeAgo = t => {
   if (!t) return '';
   const diff = Math.max(0, Math.floor(Date.now() / 1000 - t));
@@ -1912,6 +1913,21 @@ async function refresh() {
     
     nextCheckAt = (d.next_run_at || ((r.timestamp || Date.now() / 1000) + (d.run_interval_seconds || 300))) * 1000;
     renderCountdown();
+
+    const nextStartTimeEl = $('nextStartTime');
+    const nextStartSubEl = $('nextStartSub');
+    if (nextStartTimeEl && nextStartSubEl) {
+      if (currentPowerMode !== 'auto') {
+        nextStartTimeEl.textContent = '手动模式';
+        nextStartSubEl.textContent = '开机计划暂不生效';
+      } else if (d.next_start_at) {
+        nextStartTimeEl.textContent = scheduleTime(d.next_start_at);
+        nextStartSubEl.textContent = '按开机计划计算';
+      } else {
+        nextStartTimeEl.textContent = '未设置';
+        nextStartSubEl.textContent = '暂无开机规则';
+      }
+    }
     
     if (scheduled) {
       dot.className = 'dot warn';
@@ -1974,14 +1990,6 @@ async function refresh() {
     if ($('checkInterval')) {
       const interval = d.run_interval_seconds || 300;
       $('checkInterval').textContent = interval + ' 秒/次';
-    }
-    if ($('lastCheckTime')) {
-      $('lastCheckTime').textContent = r.timestamp ? timeOfDay(r.timestamp) : '—';
-    }
-    if ($('lastCheckSub')) {
-      const ago = r.timestamp ? timeAgo(r.timestamp) : '';
-      const statusStr = r.status || '完成';
-      $('lastCheckSub').textContent = ago ? `${ago} · 状态 ${statusStr}` : `状态 ${statusStr}`;
     }
     if ($('scheduledStops')) {
       $('scheduledStops').textContent = (e.scheduled_stops_30d !== undefined && e.scheduled_stops_30d !== null) ? e.scheduled_stops_30d + ' 次' : '—';
