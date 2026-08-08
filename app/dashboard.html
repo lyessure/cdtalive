@@ -840,14 +840,44 @@ button:active {
   100% { transform: scale(1); opacity: 1; }
 }
 .schedule-slots-section {
-  padding-top: 10px;
+  padding-top: 6px;
   border-top: 1px dashed rgba(15, 23, 42, 0.08);
 }
 .schedule-slots-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 0;
+  height: 84px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 4px 8px 4px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.schedule-summary-rule {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 26px;
+  padding: 2px 0;
+}
+.schedule-summary-rule + .schedule-summary-rule {
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+.schedule-summary-rule-days {
+  flex: 0 0 auto;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+}
+.schedule-summary-rule-slots {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 .schedule-rule-list {
   display: flex;
@@ -920,21 +950,21 @@ button:active {
 .slot-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 11px;
+  gap: 5px;
+  padding: 3px 8px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   color: var(--ink);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   transition: all 0.15s ease;
 }
 .slot-pill svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   color: #0284c7;
   flex-shrink: 0;
 }
@@ -1273,6 +1303,18 @@ button:active {
   }
   .schedule-summary {
     font-size: 15px;
+  }
+  .schedule-summary-rule {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .schedule-summary-rule-slots {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  .schedule-slots-list {
+    height: 180px;
   }
   .modal-backdrop {
     align-items: flex-end;
@@ -1638,6 +1680,23 @@ function schedulesJson(values = startSchedules) {
   })));
 }
 
+function scheduleClockMinutes(value) {
+  const normalized = String(value ?? '').trim();
+  const match = /^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/.exec(normalized);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  const [hours, minutes] = normalized.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+function sortedScheduleWindows(windows) {
+  return windows.map((slot, index) => ({slot, index})).sort((a, b) => {
+    const startDiff = scheduleClockMinutes(a.slot.start) - scheduleClockMinutes(b.slot.start);
+    if (startDiff) return startDiff;
+    const endDiff = scheduleClockMinutes(a.slot.end) - scheduleClockMinutes(b.slot.end);
+    return endDiff || a.index - b.index;
+  });
+}
+
 function selectedWeekdayText(weekdays) {
   const selected = new Set(weekdays);
   const labels = weekdayOptions.filter(day => selected.has(day.value)).map(day => day.label);
@@ -1654,9 +1713,7 @@ function renderScheduleSummary() {
 
   const isAuto = currentPowerMode === 'auto';
   const validRules = startSchedules.filter(rule => rule.weekdays.length && rule.windows.some(slot => slot.start && slot.end));
-  dayBadge.textContent = validRules.length
-    ? validRules.map(rule => selectedWeekdayText(rule.weekdays)).join(' / ')
-    : '未设置开机规则';
+  dayBadge.textContent = validRules.length ? `${validRules.length} 组规则` : '未设置开机规则';
 
   if (!isAuto) {
     statusBadge.className = 'schedule-status-badge paused';
@@ -1672,12 +1729,19 @@ function renderScheduleSummary() {
   if (validRules.length === 0) {
     slotsList.innerHTML = '<div class="slot-empty">未设置每日开机时间段</div>';
   } else {
-    slotsList.innerHTML = validRules.flatMap(rule => rule.windows.filter(slot => slot.start && slot.end).map(slot => `
-      <div class="slot-pill ${!isAuto ? 'disabled' : ''}" title="${isAuto ? '定时开机时间段' : '当前手动模式下暂不自动开机'}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-        <span>${escapeHtml(slot.start)} – ${escapeHtml(slot.end)}</span>
+    slotsList.innerHTML = validRules.map(rule => `
+      <div class="schedule-summary-rule">
+        <div class="schedule-summary-rule-days">${escapeHtml(selectedWeekdayText(rule.weekdays))}</div>
+        <div class="schedule-summary-rule-slots">
+          ${sortedScheduleWindows(rule.windows).filter(({slot}) => slot.start && slot.end).map(({slot}) => `
+            <div class="slot-pill ${!isAuto ? 'disabled' : ''}" title="${isAuto ? '定时开机时间段' : '当前手动模式下暂不自动开机'}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>${escapeHtml(slot.start)} – ${escapeHtml(slot.end)}</span>
+            </div>
+          `).join('')}
+        </div>
       </div>
-    `)).join('');
+    `).join('');
   }
 }
 
@@ -1792,7 +1856,7 @@ function renderScheduleRules() {
     if (!rule.windows.length) {
       slots.innerHTML = '<div class="schedule-rule-empty">未添加开机时段</div>';
     }
-    rule.windows.forEach((slot, slotIndex) => {
+    sortedScheduleWindows(rule.windows).forEach(({slot, index: slotIndex}) => {
       const row = document.createElement('div');
       row.className = 'slot';
       row.innerHTML = `<svg class="slot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><input type="text" inputmode="numeric" placeholder="09:00" value="${escapeHtml(slot.start)}" aria-label="开机开始时间"><span class="slot-arrow">至</span><input type="text" inputmode="numeric" placeholder="18:00" value="${escapeHtml(slot.end)}" aria-label="开机结束时间"><button class="remove" title="删除时段" type="button">×</button>`;
@@ -1820,7 +1884,7 @@ function renderScheduleRules() {
 }
 
 function addScheduleRule() {
-  startSchedules.push({weekdays: [1, 2, 3, 4, 5], windows: [{start: '09:00', end: '18:00'}]});
+  startSchedules.push({weekdays: [], windows: [{start: '09:00', end: '18:00'}]});
   renderScheduleRules();
 }
 
@@ -2017,7 +2081,7 @@ async function saveSettings() {
     return !valid(slot.start) || !valid(slot.end) || slot.start === slot.end || slot.start === '24:00';
   }));
   if (invalid) {
-    hint.textContent = '请为每组规则选择星期，并填写有效且不同的开机时间（结束时间可填 24:00）';
+    hint.textContent = '每组规则至少选择一个星期，不能全部不选；并填写有效且不同的开机时间（结束时间可填 24:00）';
     hint.className = 'hint error';
     return;
   }
